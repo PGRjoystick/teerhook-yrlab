@@ -1,0 +1,21 @@
+{
+  "name": "teerhook-yrlab",
+  "version": "1.0.0",
+  "description": "A simple webhook server to process transcaction from trakteer.id and do something about it automatically. ",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "PGRjoystick",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2",
+    "npx": "^10.2.2",
+    "picocolors": "^1.1.0",
+    "qrcode": "^1.5.4",
+    "tsc": "^2.0.4",
+    "typescript": "^5.5.4",
+    "vite-node": "^2.0.5",
+    "whatsapp-web.js": "^1.25.0"
+  }
+}
