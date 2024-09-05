@@ -10,9 +10,9 @@ export const printError = (text: string) => {
 
 export const printIntro = () => {
 	console.log("");
-	console.log(color.green(color.white(" Ayana Boat ")));
+	console.log(color.green(color.white(" Teerhook for Yuri-Lab Project ")));
 	console.log("|-----------------------------------------------------------|");
-	console.log("| Sang Penjelajah lautan ruang latent. Set the Sail. Boat . |");
+	console.log("| 			Server Webhook untuk donasi Yuri-Lab			 |");
 	console.log("|-----------------------------------------------------------|");
 	console.log("");
 };
@@ -37,5 +37,5 @@ export const printAuthenticationFailure = () => {
 export const printOutro = () => {
 	console.log("");
 	console.log("Yosh...!");
-	console.log("Ayana sudah siap ngomong sama kamu nich....");
+	console.log("Ayana sudah siap menangkap semua donasi yang masuk nich....");
 };
