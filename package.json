@@ -4,7 +4,8 @@
   "description": "A simple webhook server to process transcaction from trakteer.id and do something about it automatically. ",
   "main": "index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npx vite-node src/index.ts"
   },
   "author": "PGRjoystick",
   "license": "MIT",

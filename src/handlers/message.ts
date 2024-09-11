@@ -1,7 +1,8 @@
 import { Message, MessageTypes } from "whatsapp-web.js";
 import { startsWithIgnoreCase, broadcastMessage } from "../utils";
 import { client } from "../index";
-import { getPhoneNumbersByLocation, getPhoneNumbersByLocationPrefix, getAllPhoneNumbers, addUser, deleteUser, changePackageKey, changePackagePrice, createPackage, deletePackage } from "../api/sqlite3";
+import { getPhoneNumbersByLocation, getPhoneNumbersByLocationPrefix, getAllPhoneNumbers, addUser, deleteUser, changePackageKey, changePackagePrice, createPackage, deletePackage, getUserIdByPhoneNumber } from "../api/sqlite3";
+
 
 // Config & Constants
 import config from "../config";
@@ -16,6 +17,13 @@ const singState: string[] = [];
 
 function delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+const whitelistedPhoneNumbers = process.env.WHITELISTED_PHONE_NUMBERS?.split(',');
+
+// Function to check if a phone number is whitelisted
+function isWhitelisted(phoneNumber: string): boolean {
+    return whitelistedPhoneNumbers?.includes(phoneNumber) ?? false;
 }
 
 // Handles message
@@ -42,8 +50,7 @@ async function handleIncomingMessage(message: Message) {
 	if (!(await message.getChat()).isGroup && !message.hasMedia) {
 
 		// access control
-		if (message.from == process.env.WHITELISTED_PHONE_NUMBERS) {
-
+		if (isWhitelisted(message.author || message.from)) {
 			// send message to all users by location prefix
 			if (startsWithIgnoreCase(message.body, '!castlocprefix')) {
 				const args = message.body.split(' ').slice(1);
@@ -111,7 +118,9 @@ async function handleIncomingMessage(message: Message) {
 				console.log(phoneNumberStrings);
 				if (Array.isArray(phoneNumbers)) {
 					for (const phoneNumber of phoneNumberStrings) {
-						client.sendMessage(phoneNumber, messageBody);
+						const username = await getUserIdByPhoneNumber(phoneNumber);
+						const finalMessageBody = messageBody.replace('{username}', username || '');
+						client.sendMessage(phoneNumber, finalMessageBody);
 						cli.print(`[Broadcast] Pesan telah di kirim ke ${phoneNumber}`);
 						await delay(5000); 
 					}
@@ -155,7 +164,6 @@ async function handleIncomingMessage(message: Message) {
 				if (addedUsers.length > 0) {
 					message.reply(`User ${addedUsers.join(', ')} berhasil ditambahkan.`);
 				}
-
 				return;
 			}
 

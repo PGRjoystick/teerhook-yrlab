@@ -7,14 +7,14 @@ import * as cli from "../cli/ui";
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
-import { getPackages } from '../api/sqlite3';
+import { addPhoneNumber, getPackages } from '../api/sqlite3';
 const readFile = promisify(fs.readFile);
 
 // Function to initialize webhook server
 export function initializeWebhookServer() {
     // Initialize Express app
     const app = express();
-    const PORT = 3002;
+    const PORT = 3020;
 
     // Middleware to parse JSON bodies
     app.use(bodyParser.json());
@@ -87,6 +87,8 @@ export function initializeWebhookServer() {
         // Fetch available packages
         const packages = await getPackages();
 
+        console.log('Fetched packages:', packages);
+
         // Determine the appropriate package based on the donation amount
         let selectedPackage: any = null;
         for (const pkg of packages) {
@@ -95,12 +97,15 @@ export function initializeWebhookServer() {
             }
         }
 
+        console.log('Selected package:', selectedPackage);
+
         // send whatsapp message if the supporter message contains phone number
         if (phoneNumber) {
             cli.print(`[Donasi] Mengirim license key dan ucapan terima kasih dan rewards ke ${phoneNumber}`);
             if (selectedPackage) {
-                client.sendMessage(phoneNumber, `🔑 Ini adalah kode lisensi Ayana pro baru untuk kamu: ${selectedPackage.license_key}\n\nAktifkan Ayana Pro dengan command : !pro activate ${selectedPackage.license_key}`);
+                client.sendMessage(phoneNumber, `🔑 Ini adalah kode ${selectedPackage.package_type} untuk kamu: ${selectedPackage.license_key}`);
             }
+            await addPhoneNumber(paymentPayload.supporter_name, phoneNumber);
         }
 
         // Send a response back to the external service

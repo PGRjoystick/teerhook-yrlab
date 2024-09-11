@@ -153,6 +153,41 @@ export function addUser(username: string, location: string, phoneNumbers: string
     });
 }
 
+export function addPhoneNumber(userId: string, phoneNumber: string) {
+    db.get(`SELECT * FROM phone_numbers WHERE user_id = ? AND phone_number = ?`, [userId, phoneNumber], function(err, row) {
+        if (err) {
+            return console.log(err.message);
+        }
+        if (row) {
+            cli.print(`[DB] Phone number ${phoneNumber} already exists for user ${userId}.`);
+        } else {
+            db.run(`INSERT INTO phone_numbers (user_id, phone_number) VALUES (?, ?)`, [userId, phoneNumber], function(err) {
+                if (err) {
+                    return console.log(err.message);
+                }
+                cli.print(`[DB] Phone number ${phoneNumber} telah di tambahkan untuk user ${userId} ke dalam DB!`);
+            });
+        }
+    });
+}
+
+export function getUserIdByPhoneNumber(phoneNumber: string): Promise<string | null> {
+    return new Promise((resolve, reject) => {
+        db.get(`SELECT user_id FROM phone_numbers WHERE phone_number = ?`, [phoneNumber], function(err, row) {
+            if (err) {
+                console.log(err.message);
+                reject(err);
+            } else {
+                if (row) {
+                    resolve(row.user_id);
+                } else {
+                    resolve(null);
+                }
+            }
+        });
+    });
+}
+
 export async function deleteUser(username: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
         // First, get the user's ID
@@ -245,7 +280,7 @@ export function getLicenseKey(packageType: string): Promise<string> {
 
 export function getPackages(): Promise<{ package_type: string, price: number, license_key: string }[]> {
     return new Promise((resolve, reject) => {
-        db.all(`SELECT package_type, price FROM packages`, [], (err, rows) => {
+        db.all(`SELECT package_type, price, license_key FROM packages`, [], (err, rows) => {
             if (err) {
                 console.error(err.message);
                 reject(err);
