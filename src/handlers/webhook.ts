@@ -2,11 +2,12 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import { client } from '../index'
 import { PaymentPayload, LastTransactionPayload } from '../types/trakteer';
-import { checkLastTransaction, generateProKeys } from '../utils';
+import { checkLastTransaction } from '../utils';
 import * as cli from "../cli/ui";
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
+import { getPackages } from '../api/sqlite3';
 const readFile = promisify(fs.readFile);
 
 // Function to initialize webhook server
@@ -35,7 +36,7 @@ export function initializeWebhookServer() {
         const paymentPayload: PaymentPayload = req.body;
         cli.print(`[Donasi] Pembayaran donasi diterima sebesar Rp. ${paymentPayload.price} dari ${paymentPayload.supporter_name} ${paymentPayload.supporter_message ? `dengan pesan ${paymentPayload.supporter_message}` : ``}`);
         let phoneNumber
-        let statusMessage = `Hi, Ayana disini 😊. Donasi terbaru : ${paymentPayload.price} dari ${paymentPayload.supporter_name} ${paymentPayload.supporter_message ? `dengan pesan ${paymentPayload.supporter_message}` : ``} Makasih banyak ${paymentPayload.supporter_name} atas donasi nya yah 🥰 Emuach~ 😘`;
+        let statusMessage = `Donasi terbaru : ${paymentPayload.price} dari ${paymentPayload.supporter_name} ${paymentPayload.supporter_message ? `dengan pesan ${paymentPayload.supporter_message}` : ``} Makasih banyak ${paymentPayload.supporter_name} atas donasi nya yah 🥰 Emuach~ 😘`;
 
         // Log the total number of characters in statusMessage
         const totalChar = statusMessage.length;
@@ -54,6 +55,7 @@ export function initializeWebhookServer() {
                 // Append domain
                 phoneNumber += '@c.us';
             }
+        // if not, check the last transaction in the api
         } else {
             const lastTransactionPayload: LastTransactionPayload | any = await checkLastTransaction();
             if (lastTransactionPayload) {
@@ -82,37 +84,24 @@ export function initializeWebhookServer() {
             client.setStatus(statusMessage);
         }
 
-        // generate pro keys if the payment is more than PRO_KEYS_PRICE
-        const proKeysPrice = process.env.PRO_KEYS_PRICE ? parseInt(process.env.PRO_KEYS_PRICE, 10) : 100000; // Default to 5000 if not defined
-        const keysNeeded = Math.floor(paymentPayload.price / proKeysPrice);
-        let newKey: number[] = []; 
+        // Fetch available packages
+        const packages = await getPackages();
 
-        generateProKeys(keysNeeded).then(newKeys => {
-            newKey = newKeys;
-            console.log('Generated keys:', newKey);
-        }).catch(err => {
-            console.error('Error generating keys:', err);
-        });
-
-        // send whatsapp message if the supporter message contains phone number
-        if (phoneNumber) {
-            cli.print(`[Donasi] Mengirim ucapan terima kasih dan rewards ke ${phoneNumber}: ${ayanaResponse}`);
-            readFile('./rewards.txt', 'utf8')
-            .then(rewardsPage => {
-                client.sendMessage(phoneNumber, `${ayanaResponse}\n\n${rewardsPage}`);
-            })
-            .catch(error => {
-                console.error('Failed to read help page file:', error);
-                client.sendMessage(phoneNumber, ayanaResponse);
-            });
-            if (newKey) {
-                newKey.forEach(key => {
-                    client.sendMessage(phoneNumber, `🔑 Ini adalah kode lisensi Ayana pro baru untuk kamu: ${key}\n\nAktifkan Ayana Pro dengan command : !pro activate ${key}`);
-                });
+        // Determine the appropriate package based on the donation amount
+        let selectedPackage: any = null;
+        for (const pkg of packages) {
+            if (paymentPayload.price >= pkg.price) {
+                selectedPackage = pkg;
             }
         }
 
-        // do something here. idk yet :/
+        // send whatsapp message if the supporter message contains phone number
+        if (phoneNumber) {
+            cli.print(`[Donasi] Mengirim license key dan ucapan terima kasih dan rewards ke ${phoneNumber}`);
+            if (selectedPackage) {
+                client.sendMessage(phoneNumber, `🔑 Ini adalah kode lisensi Ayana pro baru untuk kamu: ${selectedPackage.license_key}\n\nAktifkan Ayana Pro dengan command : !pro activate ${selectedPackage.license_key}`);
+            }
+        }
 
         // Send a response back to the external service
         res.send('Payment processed successfully');

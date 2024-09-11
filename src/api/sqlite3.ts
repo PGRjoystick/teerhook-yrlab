@@ -1,6 +1,28 @@
 const sqlite3 = require('sqlite3').verbose();
 import * as cli from "../cli/ui";
 let db: any;
+import fs from 'fs';
+import path from 'path';
+
+export function getAllPhoneNumbersFromJson(): Promise<string[]> {
+    return new Promise((resolve, reject) => {
+        const filePath = path.join(__dirname, '../../phoneNumbers.json');
+        fs.readFile(filePath, 'utf8', (err, data) => {
+            if (err) {
+                console.error(err.message);
+                reject(err);
+            } else {
+                try {
+                    const phoneNumbers = JSON.parse(data);
+                    resolve(phoneNumbers);
+                } catch (parseErr) {
+                    console.error(parseErr.message);
+                    reject(parseErr);
+                }
+            }
+        });
+    });
+}
 
 export function initializeDatabase() {
     // Connect to SQLite database
@@ -24,6 +46,13 @@ export function initializeDatabase() {
             user_id INTEGER,
             phone_number TEXT NOT NULL,
             FOREIGN KEY(user_id) REFERENCES users(id)
+        );`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS packages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            package_type TEXT NOT NULL UNIQUE,
+            price INTEGER NOT NULL,
+            license_key TEXT NOT NULL
         );`);
     });
 }
@@ -154,6 +183,101 @@ export async function deleteUser(username: string): Promise<boolean> {
                 });
             } else {
                 cli.print(`[DB] User ${username} tidak di temukan.`);
+                resolve(false);
+            }
+        });
+    });
+}
+
+export function changePackageKey(packageType: string, newKey: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+        db.run(`UPDATE packages SET license_key = ? WHERE package_type = ?`, [newKey, packageType], function(err) {
+            if (err) {
+                console.error(err.message);
+                reject(err);
+            } else {
+                resolve();
+            }
+        });
+    });
+}
+
+export function changePackagePrice(packageType: string, newPrice: number): Promise<void> {
+    return new Promise((resolve, reject) => {
+        db.run(`UPDATE packages SET price = ? WHERE package_type = ?`, [newPrice, packageType], function(err) {
+            if (err) {
+                console.error(err.message);
+                reject(err);
+            } else {
+                resolve();
+            }
+        });
+    });
+}
+
+export function createPackage(packageType: string, price: number, key: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+        db.run(`INSERT INTO packages (package_type, price, license_key) VALUES (?, ?, ?)`, [packageType, price, key], function(err) {
+            if (err) {
+                console.error(err.message);
+                reject(err);
+            } else {
+                resolve();
+            }
+        });
+    });
+}
+
+export function getLicenseKey(packageType: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        db.get(`SELECT license_key FROM packages WHERE package_type = ?`, [packageType], (err, row) => {
+            if (err) {
+                console.error(err.message);
+                reject(err);
+            } else if (row) {
+                resolve(row.license_key);
+            } else {
+                reject(new Error('Package not found'));
+            }
+        });
+    });
+}
+
+export function getPackages(): Promise<{ package_type: string, price: number, license_key: string }[]> {
+    return new Promise((resolve, reject) => {
+        db.all(`SELECT package_type, price FROM packages`, [], (err, rows) => {
+            if (err) {
+                console.error(err.message);
+                reject(err);
+            } else {
+                resolve(rows);
+            }
+        });
+    });
+}
+
+export async function deletePackage(packageType: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+        // First, check if the package exists
+        db.get(`SELECT id FROM packages WHERE package_type = ?`, [packageType], (err, row) => {
+            if (err) {
+                console.log(err.message);
+                return reject(err);
+            }
+            if (row) {
+                let packageId = row.id;
+
+                // Delete the package
+                db.run(`DELETE FROM packages WHERE id = ?`, [packageId], (err) => {
+                    if (err) {
+                        console.log(err.message);
+                        return reject(err);
+                    }
+                    console.log(`[DB] Package ${packageType} has been deleted!`);
+                    resolve(true);
+                });
+            } else {
+                console.log(`[DB] Package ${packageType} not found.`);
                 resolve(false);
             }
         });
