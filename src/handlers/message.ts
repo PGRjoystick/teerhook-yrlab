@@ -48,9 +48,9 @@ async function handleIncomingMessage(message: Message) {
 	
 	// Private Message
 	if (!(await message.getChat()).isGroup && !message.hasMedia) {
-
 		// access control
 		if (isWhitelisted(message.author || message.from)) {
+			cli.print(`[Access Control] Command input dari ${message.from}: ${message.body}`);
 			// send message to all users by location prefix
 			if (startsWithIgnoreCase(message.body, '!castlocprefix')) {
 				const args = message.body.split(' ').slice(1);
@@ -218,6 +218,7 @@ async function handleIncomingMessage(message: Message) {
 				const newKey = args[1];
 				try {
 					await changePackageKey(packageKey, newKey);
+					cli.print(`Key ${packageKey} berhasil diubah menjadi ${newKey}`);
 					message.reply(`Key ${packageKey} berhasil diubah menjadi ${newKey}`);
 				} catch(err) {
 					console.error(err);
@@ -237,7 +238,8 @@ async function handleIncomingMessage(message: Message) {
 				const newPrice = parseInt(args[1]);
 				try {
 					await changePackagePrice(packageKey, newPrice);
-					message.reply(`Harga ${packageKey} berhasil diubah menjadi ${newPrice}`);
+					cli.print(`Harga Paket ${packageKey} berhasil diubah menjadi ${newPrice}`);
+					message.reply(`Harga Paket ${packageKey} berhasil diubah menjadi ${newPrice}`);
 				} catch(err) {
 					console.error(err);
 					message.reply('Terjadi kesalahan saat mengubah harga.');
@@ -257,7 +259,8 @@ async function handleIncomingMessage(message: Message) {
 				const key = args[2];
 				try {
 					await createPackage(packageName, price, key);
-					message.reply(`Paket ${packageName} berhasil dibuat.`);
+					cli.print(`Paket ${packageName} berhasil dibuat dengan harga ${price} dan key ${key}`);
+					message.reply(`Paket ${packageName} berhasil dibuat dengan harga ${price} dan key ${key}`);
 				} catch(err) {
 					console.error(err);
 					message.reply('Terjadi kesalahan saat membuat paket.');
@@ -266,5 +269,6 @@ async function handleIncomingMessage(message: Message) {
 			}
 		}
 	}
+	cli.print(`[Message] Pesan masuk dari ${message.from}: ${message.body}`);
 } 
 export { handleIncomingMessage };
