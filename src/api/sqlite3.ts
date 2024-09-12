@@ -154,21 +154,32 @@ export function addUser(username: string, location: string, phoneNumbers: string
 }
 
 export function addPhoneNumber(userId: string, phoneNumber: string) {
-    db.get(`SELECT * FROM phone_numbers WHERE user_id = ? AND phone_number = ?`, [userId, phoneNumber], function(err, row) {
-        if (err) {
-            return console.log(err.message);
-        }
-        if (row) {
-            cli.print(`[DB] Phone number ${phoneNumber} already exists for user ${userId}.`);
-        } else {
-            db.run(`INSERT INTO phone_numbers (user_id, phone_number) VALUES (?, ?)`, [userId, phoneNumber], function(err) {
-                if (err) {
-                    return console.log(err.message);
-                }
-                cli.print(`[DB] Phone number ${phoneNumber} telah di tambahkan untuk user ${userId} ke dalam DB!`);
-            });
-        }
-    });
+    if (userId === "Seseorang") {
+        // Allow multiple entries for "someone" with different phone numbers
+        db.run(`INSERT INTO phone_numbers (user_id, phone_number) VALUES (?, ?)`, [userId, phoneNumber], function(err) {
+            if (err) {
+                return console.log(err.message);
+            }
+            cli.print(`[DB] Phone number ${phoneNumber} telah di tambahkan untuk user ${userId} ke dalam DB!`);
+        });
+    } else {
+        // Check for existing entry for other user IDs
+        db.get(`SELECT * FROM phone_numbers WHERE user_id = ? AND phone_number = ?`, [userId, phoneNumber], function(err, row) {
+            if (err) {
+                return console.log(err.message);
+            }
+            if (row) {
+                cli.print(`[DB] Phone number ${phoneNumber} already exists for user ${userId}.`);
+            } else {
+                db.run(`INSERT INTO phone_numbers (user_id, phone_number) VALUES (?, ?)`, [userId, phoneNumber], function(err) {
+                    if (err) {
+                        return console.log(err.message);
+                    }
+                    cli.print(`[DB] Phone number ${phoneNumber} telah di tambahkan untuk user ${userId} ke dalam DB!`);
+                });
+            }
+        });
+    }
 }
 
 export function getUserIdByPhoneNumber(phoneNumber: string): Promise<string | null> {
