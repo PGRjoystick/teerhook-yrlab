@@ -171,7 +171,7 @@ export function addPhoneNumber(userId: string, phoneNumber: string) {
             if (err) {
                 return console.log(err.message);
             }
-            cli.print(`[DB] Phone number ${phoneNumber} telah di tambahkan untuk user ${userId} ke dalam DB!`);
+            cli.print(`[DB] Nomor telepon ${phoneNumber} telah ditambahkan untuk user ${userId} ke dalam DB!`);
         });
     } else {
         // Check for existing entry for other user IDs
@@ -180,13 +180,13 @@ export function addPhoneNumber(userId: string, phoneNumber: string) {
                 return console.log(err.message);
             }
             if (row) {
-                cli.print(`[DB] Phone number ${phoneNumber} already exists for user ${userId}.`);
+                cli.print(`[DB] Nomor telepon ${phoneNumber} sudah ada untuk user ${userId}.`);
             } else {
                 db.run(`INSERT INTO phone_numbers (user_id, phone_number) VALUES (?, ?)`, [userId, phoneNumber], function(err) {
                     if (err) {
                         return console.log(err.message);
                     }
-                    cli.print(`[DB] Phone number ${phoneNumber} telah di tambahkan untuk user ${userId} ke dalam DB!`);
+                    cli.print(`[DB] Nomor telepon ${phoneNumber} telah di tambahkan untuk user ${userId} ke dalam DB!`);
                 });
             }
         });

@@ -120,6 +120,7 @@ async function handleIncomingMessage(message: Message) {
 
 			// broadcast message
 			if (startsWithIgnoreCase(message.body, '!cast')) {
+				const footer = '\n\n##################\nPesan ini dikirim kepada user yang berlangganan newsletter yuri lab. untuk berhenti berlangganan, balas pesan ini dengan `!unsub`';
 				const messageBody = message.body.substring('!cast'.length + 1);
 				const phoneNumbers = await getAllPhoneNumbers();
 				const phoneNumberStrings = phoneNumbers.map(row => row.phone_number);
@@ -127,7 +128,7 @@ async function handleIncomingMessage(message: Message) {
 				if (Array.isArray(phoneNumbers)) {
 					for (const phoneNumber of phoneNumberStrings) {
 						const username = await getUserIdByPhoneNumber(phoneNumber);
-						const finalMessageBody = messageBody.replace('{username}', username || '');
+						const finalMessageBody = messageBody.replace('{username}', username || '') + footer;
 						client.sendMessage(phoneNumber, finalMessageBody);
 						cli.print(`[Broadcast] Pesan telah di kirim ke ${phoneNumber}`);
 						await delay(5000); 

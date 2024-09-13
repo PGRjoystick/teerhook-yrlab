@@ -12,7 +12,7 @@ export const printIntro = () => {
 	console.log("");
 	console.log(color.green(color.white(" Teerhook for Yuri-Lab Project ")));
 	console.log("|-----------------------------------------------------------|");
-	console.log("| 			Server Webhook untuk donasi Yuri-Lab		|");
+	console.log("|        Server Webhook untuk donasi Yuri-Lab        |");
 	console.log("|-----------------------------------------------------------|");
 	console.log("");
 };
