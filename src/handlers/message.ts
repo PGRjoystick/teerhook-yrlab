@@ -50,7 +50,7 @@ async function handleIncomingMessage(message: Message) {
 	if (!(await message.getChat()).isGroup && !message.hasMedia) {
 		// access control
 		if (isWhitelisted(message.author || message.from)) {
-			cli.print(`[Access Control] Command input dari ${message.from}: ${message.body}`);
+			cli.print(`[Access Control] Command input dari ${message.from}: "${message.body}"`);
 			// send message to all users by location prefix
 			if (startsWithIgnoreCase(message.body, '!castlocprefix')) {
 				const args = message.body.split(' ').slice(1);
