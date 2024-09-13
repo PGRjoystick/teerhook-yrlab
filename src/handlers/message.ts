@@ -270,7 +270,7 @@ async function handleIncomingMessage(message: Message) {
 			
 
 			// pkgdelete
-			if (startsWithIgnoreCase(messageString, '!pkgdelete')) {
+			if (startsWithIgnoreCase(messageString, '!pkgdel')) {
 				// Normalize whitespace by replacing all whitespace characters with a single space
 				const normalizedMessage = messageString.replace(/\s+/g, ' ').trim();
 				const args = normalizedMessage.split(' ').slice(1).map(arg => arg.trim());
