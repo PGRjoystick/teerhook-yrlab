@@ -249,7 +249,7 @@ async function handleIncomingMessage(message: Message) {
 
 			// pkgcreate
 			if (startsWithIgnoreCase(messageString, '!pkgcreate')) {
-				const args = messageString.split(' ').slice(1);
+				const args = messageString.split(' ').slice(1).map(arg => arg.trim());;
 				if (args.length < 3) {
 					cli.print('Paket gagal dibuat karena format salah. command yang di input: ' + `"${messageString}"`);
 					message.reply('Format salah! Gunakan: !pkgcreate Nama_Paket Harga Key');
