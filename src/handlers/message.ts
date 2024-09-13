@@ -251,7 +251,11 @@ async function handleIncomingMessage(message: Message) {
 			if (startsWithIgnoreCase(messageString, '!pkgcreate')) {
 				const args = messageString.split(' ').slice(1);
 				if (args.length < 3) {
+					cli.print('Paket gagal dibuat karena format salah. command yang di input: ' + `"${messageString}"`);
 					message.reply('Format salah! Gunakan: !pkgcreate Nama_Paket Harga Key');
+					cli.print('Package name: ' + args[0]);
+					cli.print('Price: ' + parseInt(args[1]));
+					cli.print('Key: ' + args[2]);
 					return;
 				}
 				const packageName = args[0];
