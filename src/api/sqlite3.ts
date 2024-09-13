@@ -193,6 +193,33 @@ export function addPhoneNumber(userId: string, phoneNumber: string) {
     }
 }
 
+export function deletePhoneNumber(phoneNumber: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+        // Check if the phone number exists
+        db.get(`SELECT * FROM phone_numbers WHERE phone_number = ?`, [phoneNumber], function(err, row) {
+            if (err) {
+                console.log(err.message);
+                return reject(err);
+            }
+            if (row) {
+                // Phone number exists, proceed to delete
+                db.run(`DELETE FROM phone_numbers WHERE phone_number = ?`, [phoneNumber], function(err) {
+                    if (err) {
+                        console.log(err.message);
+                        return reject(err);
+                    }
+                    cli.print(`[DB] Phone number ${phoneNumber} has been deleted!`);
+                    resolve(true);
+                });
+            } else {
+                // Phone number does not exist
+                cli.print(`[DB] Phone number ${phoneNumber} not found.`);
+                resolve(false);
+            }
+        });
+    });
+}
+
 export function getUserIdByPhoneNumber(phoneNumber: string): Promise<string | null> {
     return new Promise((resolve, reject) => {
         db.get(`SELECT user_id FROM phone_numbers WHERE phone_number = ?`, [phoneNumber], function(err, row) {

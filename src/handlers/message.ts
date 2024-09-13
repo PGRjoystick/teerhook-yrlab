@@ -1,7 +1,7 @@
 import { Message, MessageTypes } from "whatsapp-web.js";
 import { startsWithIgnoreCase, broadcastMessage } from "../utils";
 import { client } from "../index";
-import { getPhoneNumbersByLocation, getPhoneNumbersByLocationPrefix, getAllPhoneNumbers, addUser, deleteUser, changePackageKey, changePackagePrice, createPackage, deletePackage, getUserIdByPhoneNumber, getPackages, getUserAndPhoneNumbers } from "../api/sqlite3";
+import { getPhoneNumbersByLocation, getPhoneNumbersByLocationPrefix, getAllPhoneNumbers, addUser, deleteUser, changePackageKey, changePackagePrice, createPackage, deletePackage, getUserIdByPhoneNumber, getPackages, getUserAndPhoneNumbers, deletePhoneNumber, addPhoneNumber } from "../api/sqlite3";
 
 
 // Config & Constants
@@ -351,6 +351,38 @@ async function handleIncomingMessage(message: Message) {
 				}
 				return;
 			}
+		}
+		if (startsWithIgnoreCase(message.body, '!unsub')) {
+			const phoneNumber = message.from;
+		
+			try {
+				const result = await deletePhoneNumber(phoneNumber);
+				if (result) {
+					cli.print(`[Unsubscribe] Nomor ${phoneNumber} Telah berhenti berlangganan newsletter Yuri Lab.`);
+					message.reply(`Yah, sedih banget mendengar kamu berhenti berlangganan newsletter Yuri Lab 😞. untuk berlangganan kembali, kirim pesan !sub disini yah 😊`);
+				} else {
+					cli.print(`[Unsubscribe] Nomor ${phoneNumber} tidak di temukan.`);
+					message.reply(`Kamu belum pernah berlangganan newsletter Yuri Lab 😞. untuk berlangganan newsletter, kirim pesan !sub disini yah 😊`);
+				}
+			} catch (err) {
+				console.error(err);
+				message.reply('Terjadi kesalahan saat berhenti berlangganan newsletter.');
+			}
+			return;
+		}
+		// subscribe
+		if (startsWithIgnoreCase(message.body, '!sub')) {
+			const phoneNumber = message.from;
+			const userName: string = (message.rawData as any).notifyName as string;
+			try {
+				await addPhoneNumber(userName, phoneNumber);
+				cli.print(`[Subscribe] Nomor ${phoneNumber} dengan username ${userName} Telah berlangganan newsletter Yuri Lab.`);
+				message.reply(`Yay 🥳 Terima kasih Telah berlangganan newsletter Yuri Lab. Nantikan update manga terbaru dari Yuri Lab yah 😊`);
+			} catch (err) {
+				console.error(err);
+				message.reply('Terjadi kesalahan saat berlangganan newsletter.');
+			}
+			return;
 		}
 	}
 	cli.print(`[Message] Pesan masuk dari ${message.from}: ${message.body}`);
