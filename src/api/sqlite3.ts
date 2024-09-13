@@ -152,6 +152,17 @@ export function addUser(username: string, location: string, phoneNumbers: string
         });
     });
 }
+export function getUserAndPhoneNumbers(): Promise<{ userId: string, phoneNumber: string }[]> {
+    return new Promise((resolve, reject) => {
+        db.all(`SELECT user_id, phone_number FROM phone_numbers`, [], (err, rows) => {
+            if (err) {
+                console.log(err.message);
+                return reject(err);
+            }
+            resolve(rows.map(row => ({ userId: row.user_id, phoneNumber: row.phone_number })));
+        });
+    });
+}
 
 export function addPhoneNumber(userId: string, phoneNumber: string) {
     if (userId === "Seseorang") {

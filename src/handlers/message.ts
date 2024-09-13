@@ -1,7 +1,7 @@
 import { Message, MessageTypes } from "whatsapp-web.js";
 import { startsWithIgnoreCase, broadcastMessage } from "../utils";
 import { client } from "../index";
-import { getPhoneNumbersByLocation, getPhoneNumbersByLocationPrefix, getAllPhoneNumbers, addUser, deleteUser, changePackageKey, changePackagePrice, createPackage, deletePackage, getUserIdByPhoneNumber, getPackages } from "../api/sqlite3";
+import { getPhoneNumbersByLocation, getPhoneNumbersByLocationPrefix, getAllPhoneNumbers, addUser, deleteUser, changePackageKey, changePackagePrice, createPackage, deletePackage, getUserIdByPhoneNumber, getPackages, getUserAndPhoneNumbers } from "../api/sqlite3";
 
 
 // Config & Constants
@@ -107,6 +107,15 @@ async function handleIncomingMessage(message: Message) {
 					console.error(err);
 					message.reply('Terjadi kesalahan saat mengirim pesan broadcast.');
 				}
+				return;
+			}
+
+			// print a list of phone number and username
+			if (startsWithIgnoreCase(message.body, '!sublist')) {
+				const phoneNumbers = await getUserAndPhoneNumbers();
+				const formattedOutput = phoneNumbers.map(row => `Phone numbers: ${row.phoneNumber} | Usernames: ${row.userId}`).join('\n');
+				console.log(formattedOutput);
+				message.reply(formattedOutput);
 				return;
 			}
 
@@ -258,12 +267,14 @@ async function handleIncomingMessage(message: Message) {
 					if (packages.length === 0) {
 						message.reply('Tidak ada paket yang tersedia.');
 					} else {
+						const pkgList = "Paket yang tersedia:\n";
 						const formattedPackages = packages.map(pkg => `- Nama Paket: ${pkg.package_type}, Harga: ${pkg.price}, License Key: ${pkg.license_key}`);
-						const response = formattedPackages.join('\n');
+						const response = pkgList + formattedPackages.join('\n');
 						message.reply(response);
 					}
 				} catch (err) {
 					message.reply('Terjadi kesalahan saat mengambil paket.');
+					console.error(err.message);
 				}
 				return;
 			}

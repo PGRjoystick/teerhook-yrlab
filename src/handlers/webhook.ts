@@ -103,7 +103,9 @@ export function initializeWebhookServer() {
         if (phoneNumber) {
             cli.print(`[Donasi] Mengirim license key dan ucapan terima kasih dan rewards ke ${phoneNumber}`);
             if (selectedPackage) {
-                client.sendMessage(phoneNumber, `🔑 Ini adalah kode ${selectedPackage.package_type} untuk kamu: ${selectedPackage.license_key}`);
+                client.sendMessage(phoneNumber, `🎉 Terima kasih telah berdonasi sebesar Rp. ${paymentPayload.price} untuk paket ${selectedPackage.package_type}! 🔑 Ini adalah kode ${selectedPackage.package_type} untuk kamu 🔑: `);
+                await new Promise(resolve => setTimeout(resolve, 500));
+                client.sendMessage(phoneNumber, `${selectedPackage.license_key}`);
             }
             await addPhoneNumber(paymentPayload.supporter_name, phoneNumber);
         }
