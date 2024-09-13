@@ -114,7 +114,6 @@ async function handleIncomingMessage(message: Message) {
 			if (startsWithIgnoreCase(message.body, '!sublist')) {
 				const phoneNumbers = await getUserAndPhoneNumbers();
 				const formattedOutput = phoneNumbers.map(row => `Phone numbers: ${row.phoneNumber} | Usernames: ${row.userId}`).join('\n');
-				console.log(formattedOutput);
 				message.reply(formattedOutput);
 				return;
 			}
