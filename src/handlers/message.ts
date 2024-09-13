@@ -209,7 +209,9 @@ async function handleIncomingMessage(message: Message) {
 			}
 
 			if (startsWithIgnoreCase(messageString, '!pkgkeychange')) {
-				const args = messageString.split(' ').slice(1);
+				// Normalize whitespace by replacing all whitespace characters with a single space
+				const normalizedMessage = messageString.replace(/\s+/g, ' ').trim();
+				const args = normalizedMessage.split(' ').slice(1).map(arg => arg.trim());
 				if (args.length < 2) {
 					message.reply('Format salah! Gunakan: !pkgkeychange Nama_Paket Key_baru');
 					return;
@@ -229,7 +231,9 @@ async function handleIncomingMessage(message: Message) {
 			
 			// pkgpricechange
 			if (startsWithIgnoreCase(messageString, '!pkgpricechange')) {
-				const args = messageString.split(' ').slice(1);
+				// Normalize whitespace by replacing all whitespace characters with a single space
+				const normalizedMessage = messageString.replace(/\s+/g, ' ').trim();
+				const args = normalizedMessage.split(' ').slice(1).map(arg => arg.trim());
 				if (args.length < 2) {
 					message.reply('Format salah! Gunakan: !pkgpricechange Nama_Paket Harga_baru');
 					return;
@@ -249,19 +253,34 @@ async function handleIncomingMessage(message: Message) {
 
 			// pkgcreate
 			if (startsWithIgnoreCase(messageString, '!pkgcreate')) {
-				const args = messageString.split(' ').slice(1).map(arg => arg.trim());;
+				// Normalize whitespace by replacing all whitespace characters with a single space
+				const normalizedMessage = messageString.replace(/\s+/g, ' ').trim();
+				const args = normalizedMessage.split(' ').slice(1).map(arg => arg.trim());
 				cli.print('Arguments: ' + JSON.stringify(args)); // Log the arguments for debugging
+			
 				if (args.length < 3) {
 					cli.print('Paket gagal dibuat karena format salah. command yang di input: ' + `"${messageString}"`);
 					message.reply('Format salah! Gunakan: !pkgcreate Nama_Paket Harga Key');
-					cli.print('Package name: ' + args[0]);
-					cli.print('Price: ' + parseInt(args[1]));
-					cli.print('Key: ' + args[2]);
+					cli.print('Package name: ' + (args[0] || 'undefined'));
+					cli.print('Price: ' + (parseInt(args[1]) || 'undefined'));
+					cli.print('Key: ' + (args[2] || 'undefined'));
 					return;
 				}
+			
 				const packageName = args[0];
 				const price = parseInt(args[1]);
 				const key = args[2];
+			
+				cli.print('Package name: ' + packageName);
+				cli.print('Price: ' + price);
+				cli.print('Key: ' + key);
+			
+				if (!packageName || isNaN(price) || !key) {
+					cli.print('Paket gagal dibuat karena format salah. command yang di input: ' + `"${messageString}"`);
+					message.reply('Format salah! Gunakan: !pkgcreate Nama_Paket Harga Key');
+					return;
+				}
+			
 				try {
 					await createPackage(packageName, price, key);
 					cli.print(`Paket ${packageName} berhasil dibuat dengan harga ${price} dan key ${key}`);
@@ -269,7 +288,7 @@ async function handleIncomingMessage(message: Message) {
 				} catch(err) {
 					console.error(err);
 					message.reply('Terjadi kesalahan saat membuat paket.');
-				};
+				}
 				return;
 			}
 		}
