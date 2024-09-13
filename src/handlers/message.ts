@@ -1,7 +1,7 @@
 import { Message, MessageTypes } from "whatsapp-web.js";
 import { startsWithIgnoreCase, broadcastMessage } from "../utils";
 import { client } from "../index";
-import { getPhoneNumbersByLocation, getPhoneNumbersByLocationPrefix, getAllPhoneNumbers, addUser, deleteUser, changePackageKey, changePackagePrice, createPackage, deletePackage, getUserIdByPhoneNumber } from "../api/sqlite3";
+import { getPhoneNumbersByLocation, getPhoneNumbersByLocationPrefix, getAllPhoneNumbers, addUser, deleteUser, changePackageKey, changePackagePrice, createPackage, deletePackage, getUserIdByPhoneNumber, getPackages } from "../api/sqlite3";
 
 
 // Config & Constants
@@ -207,6 +207,28 @@ async function handleIncomingMessage(message: Message) {
 
 				return;
 			}
+			
+			// pkgpricechange
+			if (startsWithIgnoreCase(messageString, '!pkgpricechange')) {
+				// Normalize whitespace by replacing all whitespace characters with a single space
+				const normalizedMessage = messageString.replace(/\s+/g, ' ').trim();
+				const args = normalizedMessage.split(' ').slice(1).map(arg => arg.trim());
+				if (args.length < 2) {
+					message.reply('Format salah! Gunakan: !pkgpricechange Nama_Paket Harga_baru');
+					return;
+				}
+				const packageKey = args[0];
+				const newPrice = parseInt(args[1]);
+				try {
+					await changePackagePrice(packageKey, newPrice);
+					cli.print(`Harga Paket ${packageKey} berhasil diubah menjadi ${newPrice}`);
+					message.reply(`Harga Paket ${packageKey} berhasil diubah menjadi ${newPrice}`);
+				} catch(err) {
+					console.error(err);
+					message.reply('Terjadi kesalahan saat mengubah harga.');
+				};
+				return;
+			}
 
 			if (startsWithIgnoreCase(messageString, '!pkgkeychange')) {
 				// Normalize whitespace by replacing all whitespace characters with a single space
@@ -228,26 +250,48 @@ async function handleIncomingMessage(message: Message) {
 				};
 				return;
 			}
+
+			// pkgprint
+			if (startsWithIgnoreCase(messageString, '!pkgprint')) {
+				try {
+					const packages = await getPackages();
+					if (packages.length === 0) {
+						message.reply('Tidak ada paket yang tersedia.');
+					} else {
+						const formattedPackages = packages.map(pkg => `- Nama Paket: ${pkg.package_type}, Harga: ${pkg.price}, License Key: ${pkg.license_key}`);
+						const response = formattedPackages.join('\n');
+						message.reply(response);
+					}
+				} catch (err) {
+					message.reply('Terjadi kesalahan saat mengambil paket.');
+				}
+				return;
+			}
 			
-			// pkgpricechange
-			if (startsWithIgnoreCase(messageString, '!pkgpricechange')) {
+
+			// pkgdelete
+			if (startsWithIgnoreCase(messageString, '!pkgdelete')) {
 				// Normalize whitespace by replacing all whitespace characters with a single space
 				const normalizedMessage = messageString.replace(/\s+/g, ' ').trim();
 				const args = normalizedMessage.split(' ').slice(1).map(arg => arg.trim());
-				if (args.length < 2) {
-					message.reply('Format salah! Gunakan: !pkgpricechange Nama_Paket Harga_baru');
+				if (args.length < 1) {
+					message.reply('Format salah! Gunakan: !pkgdelete Nama_Paket');
 					return;
 				}
 				const packageKey = args[0];
-				const newPrice = parseInt(args[1]);
 				try {
-					await changePackagePrice(packageKey, newPrice);
-					cli.print(`Harga Paket ${packageKey} berhasil diubah menjadi ${newPrice}`);
-					message.reply(`Harga Paket ${packageKey} berhasil diubah menjadi ${newPrice}`);
+					const result = await deletePackage(packageKey);
+					if (result) {
+						cli.print(`Paket ${packageKey} berhasil dihapus`);
+						message.reply(`Paket ${packageKey} berhasil dihapus`);
+					} else {
+						cli.print(`Paket ${packageKey} tidak ditemukan`);
+						message.reply(`Paket ${packageKey} tidak ditemukan`);
+					}
 				} catch(err) {
 					console.error(err);
-					message.reply('Terjadi kesalahan saat mengubah harga.');
-				};
+					message.reply('Terjadi kesalahan saat menghapus paket.');
+				}
 				return;
 			}
 
@@ -286,8 +330,13 @@ async function handleIncomingMessage(message: Message) {
 					cli.print(`Paket ${packageName} berhasil dibuat dengan harga ${price} dan key ${key}`);
 					message.reply(`Paket ${packageName} berhasil dibuat dengan harga ${price} dan key ${key}`);
 				} catch(err) {
-					console.error(err);
-					message.reply('Terjadi kesalahan saat membuat paket.');
+					if (err.message.includes('already exists')) {
+						cli.print(`Paket ${packageName} gagal dibuat karena sudah ada di database.`);
+						message.reply(`Paket ${packageName} gagal dibuat karena sudah ada di database.`);
+					} else {
+						console.error(err);
+						message.reply('Terjadi kesalahan saat membuat paket.');
+					}
 				}
 				return;
 			}

@@ -263,12 +263,26 @@ export function changePackagePrice(packageType: string, newPrice: number): Promi
 
 export function createPackage(packageType: string, price: number, key: string): Promise<void> {
     return new Promise((resolve, reject) => {
-        db.run(`INSERT INTO packages (package_type, price, license_key) VALUES (?, ?, ?)`, [packageType, price, key], function(err) {
+        // Check if the package type already exists
+        db.get(`SELECT 1 FROM packages WHERE package_type = ?`, [packageType], function(err, row) {
             if (err) {
                 console.error(err.message);
-                reject(err);
+                return reject(err);
+            }
+            if (row) {
+                // Package type already exists
+                console.log(`[DB] Package type ${packageType} already exists.`);
+                return reject(new Error(`Package type ${packageType} already exists.`));
             } else {
-                resolve();
+                // Insert the new package
+                db.run(`INSERT INTO packages (package_type, price, license_key) VALUES (?, ?, ?)`, [packageType, price, key], function(err) {
+                    if (err) {
+                        console.error(err.message);
+                        return reject(err);
+                    } else {
+                        resolve();
+                    }
+                });
             }
         });
     });
