@@ -108,6 +108,8 @@ export function initializeWebhookServer() {
                 client.sendMessage(phoneNumber, `Yay 🥳 Terima kasih telah berdonasi sebesar Rp. ${paymentPayload.price} untuk paket ${selectedPackage.package_type}! 🔑 dibawah ini adalah kode paket ${selectedPackage.package_type} untuk kamu. Makasih banyak yah sekali lagi 😉`);
                 await new Promise(resolve => setTimeout(resolve, 500));
                 client.sendMessage(phoneNumber, `${selectedPackage.license_key}`);
+                await new Promise(resolve => setTimeout(resolve, 500));
+                client.sendMessage(phoneNumber, `Untuk melihat kembali kode paket ini jika terjadi perubahan kode, kirim pesan !status ke whatsapp ini. Selamat menikmati manga dari website kami 📚🎉`);
             }
             await addPhoneNumber(paymentPayload.supporter_name, phoneNumber);
         }
