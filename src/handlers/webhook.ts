@@ -2,7 +2,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import { client } from '../index'
 import { PaymentPayload, LastTransactionPayload } from '../types/trakteer';
-import { checkLastTransaction } from '../utils';
+import { activatePackage, checkLastTransaction } from '../utils';
 import * as cli from "../cli/ui";
 import fs from 'fs';
 import path from 'path';
@@ -103,6 +103,7 @@ export function initializeWebhookServer() {
         if (phoneNumber) {
             cli.print(`[Donasi] Mengirim license key dan ucapan terima kasih dan rewards ke ${phoneNumber}`);
             if (selectedPackage) {
+                await activatePackage(phoneNumber ,selectedPackage.package_type);
                 client.sendMessage(phoneNumber, `Yay 🥳 Terima kasih telah berdonasi sebesar Rp. ${paymentPayload.price} untuk paket ${selectedPackage.package_type}! 🔑 dibawah ini adalah kode paket ${selectedPackage.package_type} untuk kamu. Makasih banyak yah sekali lagi 😉`);
                 await new Promise(resolve => setTimeout(resolve, 500));
                 client.sendMessage(phoneNumber, `${selectedPackage.license_key}`);

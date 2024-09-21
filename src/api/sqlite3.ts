@@ -33,15 +33,15 @@ export function initializeDatabase() {
         console.log('Connected to the SQLite database.');
     });
 
-    // Execute SQL commands to create tables
+    // Execute SQL commands to create tables and add new columns
     db.serialize(() => {
         db.run(`CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
-            location_code TEXT NOT NULL
+            user_id TEXT UNIQUE NOT NULL
         );`);
 
-        db.run(`CREATE TABLE IF NOT EXISTS phone_numbers (
+        db.run(`CREATE TABLE IF NOT EXISTS newsletter (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
             phone_number TEXT NOT NULL,
@@ -54,6 +54,143 @@ export function initializeDatabase() {
             price INTEGER NOT NULL,
             license_key TEXT NOT NULL
         );`);
+
+        // Create Parameters table
+        db.run(`CREATE TABLE IF NOT EXISTS parameters (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            active_package TEXT,
+            packageExpires TEXT,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        );`);
+
+        // Add new column to users table if it doesn't exist
+        db.run(`ALTER TABLE users ADD COLUMN user_id TEXT UNIQUE NOT NULL`, (err) => {
+            if (err && !err.message.includes("duplicate column name")) {
+                console.error(err.message);
+            }
+        });
+    });
+}
+
+export function saveParam(userID: string, paramToChange: string, value: any) {
+    // Validate the parameter to change
+    const validParams = [
+        'active_package', 'packageExpires'
+    ];
+    
+    if (!validParams.includes(paramToChange)) {
+        console.error(`Invalid parameter: ${paramToChange}`);
+        return;
+    }
+
+    // Update the parameter in the database
+    db.serialize(() => {
+        // Get the user ID from the users table
+        db.get(`SELECT id FROM users WHERE user_id = ?`, [userID], (err, row) => {
+            if (err) {
+                console.error(err.message);
+                return;
+            }
+            if (!row) {
+                console.error(`User not found: ${userID}`);
+                return;
+            }
+            const userIdDb = row.id;
+
+            // Update the parameter in the parameters table
+            const sql = `UPDATE parameters SET ${paramToChange} = ? WHERE user_id = ?`;
+            db.run(sql, [value, userIdDb], (err) => {
+                if (err) {
+                    console.error(err.message);
+                } else {
+                    console.log(`Parameter ${paramToChange} updated for user ${userID}`);
+                }
+            });
+        });
+    });
+}
+
+export function readParam(userID: string, parameterToGet: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+        // Validate the parameter to get
+        const validParams = [
+            'active_package', 'packageExpires'
+        ];
+        
+        if (!validParams.includes(parameterToGet)) {
+            reject(new Error(`Invalid parameter: ${parameterToGet}`));
+            return;
+        }
+
+        // Get the user ID from the users table
+        db.get(`SELECT id FROM users WHERE user_id = ?`, [userID], (err, row) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            if (!row) {
+                reject(new Error(`User not found: ${userID}`));
+                return;
+            }
+            const userIdDb = row.id;
+
+            // Get the parameter from the parameters table
+            const sql = `SELECT ${parameterToGet} FROM parameters WHERE user_id = ?`;
+            db.get(sql, [userIdDb], (err, row) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                if (!row) {
+                    reject(new Error(`Parameter not found for user: ${userID}`));
+                    return;
+                }
+                resolve(row[parameterToGet]);
+            });
+        });
+    });
+}
+
+export function initializeUserParam(userID: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+        db.serialize(() => {
+            // Check if the user already exists
+            db.get(`SELECT id FROM users WHERE user_id = ?`, [userID], (err, row) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                if (row) {
+                    // User already exists, no need to initialize
+                    resolve();
+                    return;
+                }
+
+                // Insert new user into users table
+                db.run(`INSERT INTO users (user_id) VALUES (?)`, [userID], function(err) {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    const userIdDb = this.lastID;
+
+                    // Insert default parameters into parameters table
+                    db.run(`INSERT INTO parameters (user_id, active_package, packageExpires) VALUES (?, ?, ?)`, 
+                    [
+                        userIdDb, 
+                        null,  // active_package
+                        null  // packageExpires
+                    ], (err) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve();
+                        }
+                    });
+                });
+            });
+        });
     });
 }
 
@@ -61,8 +198,8 @@ export function getUsernameByPhoneNumber(phoneNumber: string): Promise<string> {
     return new Promise((resolve, reject) => {
         db.get(`SELECT users.name
                 FROM users
-                JOIN phone_numbers ON users.id = phone_numbers.user_id
-                WHERE phone_numbers.phone_number = ?`, [phoneNumber], (err, row) => {
+                JOIN newsletter ON users.id = newsletter.user_id
+                WHERE newsletter.phone_number = ?`, [phoneNumber], (err, row) => {
             if (err) {
                 reject(err);
             } else if (row) {
@@ -76,9 +213,9 @@ export function getUsernameByPhoneNumber(phoneNumber: string): Promise<string> {
 
 export function getPhoneNumbersByLocation(location: string): Promise<any[]> {
     return new Promise((resolve, reject) => {
-        db.all(`SELECT phone_numbers.phone_number
-                FROM phone_numbers
-                JOIN users ON users.id = phone_numbers.user_id
+        db.all(`SELECT newsletter.phone_number
+                FROM newsletter
+                JOIN users ON users.id = newsletter.user_id
                 WHERE users.location_code = ?`, [location], (err, rows) => {
             if (err) {
                 console.error(err.message);
@@ -92,9 +229,9 @@ export function getPhoneNumbersByLocation(location: string): Promise<any[]> {
 
 export function getPhoneNumbersByLocationPrefix(locationPrefix: string): Promise<any[]> {
     return new Promise((resolve, reject) => {
-        db.all(`SELECT users.name, phone_numbers.phone_number
-                FROM phone_numbers
-                JOIN users ON users.id = phone_numbers.user_id
+        db.all(`SELECT users.name, newsletter.phone_number
+                FROM newsletter
+                JOIN users ON users.id = newsletter.user_id
                 WHERE users.location_code LIKE ?`, [locationPrefix + '%'], (err, rows) => {
             if (err) {
                 console.error(err.message);
@@ -108,9 +245,9 @@ export function getPhoneNumbersByLocationPrefix(locationPrefix: string): Promise
 
 export function getPhoneNumbersByUser(username: string): Promise<any[]> {
     return new Promise((resolve, reject) => {
-        db.all(`SELECT phone_numbers.phone_number
-                FROM phone_numbers
-                JOIN users ON users.id = phone_numbers.user_id
+        db.all(`SELECT newsletter.phone_number
+                FROM newsletter
+                JOIN users ON users.id = newsletter.user_id
                 WHERE users.name = ?`, [username], (err, rows) => {
             if (err) {
                 console.error(err.message);
@@ -124,8 +261,8 @@ export function getPhoneNumbersByUser(username: string): Promise<any[]> {
 
 export function getAllPhoneNumbers(): Promise<any[]> {
     return new Promise((resolve, reject) => {
-        db.all(`SELECT phone_numbers.phone_number
-                 FROM phone_numbers`, [], (err, rows) => {
+        db.all(`SELECT newsletter.phone_number
+                 FROM newsletter`, [], (err, rows) => {
             if (err) {
                 console.error(err.message);
                 reject(err);
@@ -143,7 +280,7 @@ export function addUser(username: string, location: string, phoneNumbers: string
         }
         let userId = this.lastID;
         phoneNumbers.forEach(phoneNumber => {
-            db.run(`INSERT INTO phone_numbers (user_id, phone_number) VALUES (?, ?)`, [userId, phoneNumber], (err) => {
+            db.run(`INSERT INTO newsletter (user_id, phone_number) VALUES (?, ?)`, [userId, phoneNumber], (err) => {
                 if (err) {
                     return console.log(err.message);
                 }
@@ -154,7 +291,7 @@ export function addUser(username: string, location: string, phoneNumbers: string
 }
 export function getUserAndPhoneNumbers(): Promise<{ userId: string, phoneNumber: string }[]> {
     return new Promise((resolve, reject) => {
-        db.all(`SELECT user_id, phone_number FROM phone_numbers`, [], (err, rows) => {
+        db.all(`SELECT user_id, phone_number FROM newsletter`, [], (err, rows) => {
             if (err) {
                 console.log(err.message);
                 return reject(err);
@@ -167,7 +304,7 @@ export function getUserAndPhoneNumbers(): Promise<{ userId: string, phoneNumber:
 export function addPhoneNumber(userId: string, phoneNumber: string) {
     if (userId === "Seseorang") {
         // Allow multiple entries for "someone" with different phone numbers
-        db.run(`INSERT INTO phone_numbers (user_id, phone_number) VALUES (?, ?)`, [userId, phoneNumber], function(err) {
+        db.run(`INSERT INTO newsletter (user_id, phone_number) VALUES (?, ?)`, [userId, phoneNumber], function(err) {
             if (err) {
                 return console.log(err.message);
             }
@@ -175,14 +312,14 @@ export function addPhoneNumber(userId: string, phoneNumber: string) {
         });
     } else {
         // Check for existing entry for other user IDs
-        db.get(`SELECT * FROM phone_numbers WHERE user_id = ? AND phone_number = ?`, [userId, phoneNumber], function(err, row) {
+        db.get(`SELECT * FROM newsletter WHERE user_id = ? AND phone_number = ?`, [userId, phoneNumber], function(err, row) {
             if (err) {
                 return console.log(err.message);
             }
             if (row) {
                 cli.print(`[DB] Nomor telepon ${phoneNumber} sudah ada untuk user ${userId}.`);
             } else {
-                db.run(`INSERT INTO phone_numbers (user_id, phone_number) VALUES (?, ?)`, [userId, phoneNumber], function(err) {
+                db.run(`INSERT INTO newsletter (user_id, phone_number) VALUES (?, ?)`, [userId, phoneNumber], function(err) {
                     if (err) {
                         return console.log(err.message);
                     }
@@ -196,14 +333,14 @@ export function addPhoneNumber(userId: string, phoneNumber: string) {
 export function deletePhoneNumber(phoneNumber: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
         // Check if the phone number exists
-        db.get(`SELECT * FROM phone_numbers WHERE phone_number = ?`, [phoneNumber], function(err, row) {
+        db.get(`SELECT * FROM newsletter WHERE phone_number = ?`, [phoneNumber], function(err, row) {
             if (err) {
                 console.log(err.message);
                 return reject(err);
             }
             if (row) {
                 // Phone number exists, proceed to delete
-                db.run(`DELETE FROM phone_numbers WHERE phone_number = ?`, [phoneNumber], function(err) {
+                db.run(`DELETE FROM newsletter WHERE phone_number = ?`, [phoneNumber], function(err) {
                     if (err) {
                         console.log(err.message);
                         return reject(err);
@@ -222,7 +359,7 @@ export function deletePhoneNumber(phoneNumber: string): Promise<boolean> {
 
 export function getUserIdByPhoneNumber(phoneNumber: string): Promise<string | null> {
     return new Promise((resolve, reject) => {
-        db.get(`SELECT user_id FROM phone_numbers WHERE phone_number = ?`, [phoneNumber], function(err, row) {
+        db.get(`SELECT user_id FROM newsletter WHERE phone_number = ?`, [phoneNumber], function(err, row) {
             if (err) {
                 console.log(err.message);
                 reject(err);
@@ -249,7 +386,7 @@ export async function deleteUser(username: string): Promise<boolean> {
                 let userId = row.id;
 
                 // Delete the user's phone numbers
-                db.run(`DELETE FROM phone_numbers WHERE user_id = ?`, [userId], (err) => {
+                db.run(`DELETE FROM newsletter WHERE user_id = ?`, [userId], (err) => {
                     if (err) {
                         console.log(err.message);
                         return reject(err);
@@ -341,9 +478,17 @@ export function getLicenseKey(packageType: string): Promise<string> {
     });
 }
 
-export function getPackages(): Promise<{ package_type: string, price: number, license_key: string }[]> {
+export function getPackages(packageType?: string): Promise<{ package_type: string, price: number, license_key: string }[]> {
     return new Promise((resolve, reject) => {
-        db.all(`SELECT package_type, price, license_key FROM packages`, [], (err, rows) => {
+        let query = `SELECT package_type, price, license_key FROM packages`;
+        const params: any[] = [];
+
+        if (packageType) {
+            query += ` WHERE package_type = ?`;
+            params.push(packageType);
+        }
+
+        db.all(query, params, (err, rows) => {
             if (err) {
                 console.error(err.message);
                 reject(err);

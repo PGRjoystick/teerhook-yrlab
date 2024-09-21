@@ -1,5 +1,5 @@
 import { Message, MessageTypes } from "whatsapp-web.js";
-import { startsWithIgnoreCase, broadcastMessage } from "../utils";
+import { startsWithIgnoreCase, broadcastMessage, checkAndUpdateProStatus } from "../utils";
 import { client } from "../index";
 import { getPhoneNumbersByLocation, getPhoneNumbersByLocationPrefix, getAllPhoneNumbers, addUser, deleteUser, changePackageKey, changePackagePrice, createPackage, deletePackage, getUserIdByPhoneNumber, getPackages, getUserAndPhoneNumbers, deletePhoneNumber, addPhoneNumber } from "../api/sqlite3";
 
@@ -12,8 +12,6 @@ import * as cli from "../cli/ui";
 
 // For deciding to ignore old messages
 import { botReadyTimestamp } from "../index";
-
-const singState: string[] = [];
 
 function delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -381,6 +379,25 @@ async function handleIncomingMessage(message: Message) {
 			} catch (err) {
 				console.error(err);
 				message.reply('Terjadi kesalahan saat berlangganan newsletter.');
+			}
+			return;
+		}
+		// check status for user (!status)
+		if (startsWithIgnoreCase(message.body, '!status')) {
+			const userName: string = (message.rawData as any).notifyName as string;
+			try {
+				const hasActivePackage = await checkAndUpdateProStatus(message.from);
+				if (hasActivePackage.hasActivePackage) {
+					const activePackageName = hasActivePackage.activePackageName;
+					const packageInfo = await getPackages(activePackageName);
+					// Convert expiryDate to human-readable text
+					const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+					const humanReadableExpiryDate = hasActivePackage.expiryDate ? new Date(hasActivePackage.expiryDate).toLocaleDateString('id-ID', options) : '';
+					message.reply(`Hai ${userName}, kamu memiliki paket ${activePackageName} yang aktif. Key: ${packageInfo[0].license_key}\n\nPaket akan berakhir pada: ${humanReadableExpiryDate}`);
+				}
+			} catch (err) {
+				console.error(err);
+				message.reply('Terjadi kesalahan saat memeriksa status berlangganan.');
 			}
 			return;
 		}
