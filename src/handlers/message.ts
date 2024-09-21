@@ -1,7 +1,7 @@
 import { Message, MessageTypes } from "whatsapp-web.js";
 import { startsWithIgnoreCase, broadcastMessage, checkAndUpdateProStatus } from "../utils";
 import { client } from "../index";
-import { getPhoneNumbersByLocation, getPhoneNumbersByLocationPrefix, getAllPhoneNumbers, addUser, deleteUser, changePackageKey, changePackagePrice, createPackage, deletePackage, getUserIdByPhoneNumber, getPackages, getUserAndPhoneNumbers, deletePhoneNumber, addPhoneNumber } from "../api/sqlite3";
+import { getPhoneNumbersByLocation, getPhoneNumbersByLocationPrefix, getAllPhoneNumbers, addUser, deleteUser, changePackageKey, changePackagePrice, createPackage, deletePackage, getUserIdByPhoneNumber, getPackages, getUserAndPhoneNumbers, deletePhoneNumber, addPhoneNumber, initializeUserParam } from "../api/sqlite3";
 
 
 // Config & Constants
@@ -386,6 +386,7 @@ async function handleIncomingMessage(message: Message) {
 		if (startsWithIgnoreCase(message.body, '!status')) {
 			const userName: string = (message.rawData as any).notifyName as string;
 			try {
+				await initializeUserParam(message.body);
 				const hasActivePackage = await checkAndUpdateProStatus(message.from);
 				if (hasActivePackage.hasActivePackage) {
 					const activePackageName = hasActivePackage.activePackageName;

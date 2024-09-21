@@ -7,7 +7,7 @@ import * as cli from "../cli/ui";
 import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
-import { addPhoneNumber, getPackages } from '../api/sqlite3';
+import { addPhoneNumber, getPackages, initializeUserParam } from '../api/sqlite3';
 const readFile = promisify(fs.readFile);
 
 // Function to initialize webhook server
@@ -103,6 +103,7 @@ export function initializeWebhookServer() {
         if (phoneNumber) {
             cli.print(`[Donasi] Mengirim license key dan ucapan terima kasih dan rewards ke ${phoneNumber}`);
             if (selectedPackage) {
+                await initializeUserParam(phoneNumber);
                 await activatePackage(phoneNumber ,selectedPackage.package_type);
                 client.sendMessage(phoneNumber, `Yay 🥳 Terima kasih telah berdonasi sebesar Rp. ${paymentPayload.price} untuk paket ${selectedPackage.package_type}! 🔑 dibawah ini adalah kode paket ${selectedPackage.package_type} untuk kamu. Makasih banyak yah sekali lagi 😉`);
                 await new Promise(resolve => setTimeout(resolve, 500));
