@@ -394,6 +394,8 @@ async function handleIncomingMessage(message: Message) {
 					const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
 					const humanReadableExpiryDate = hasActivePackage.expiryDate ? new Date(hasActivePackage.expiryDate).toLocaleDateString('id-ID', options) : '';
 					message.reply(`Hai ${userName}, kamu memiliki paket ${activePackageName} yang aktif. Key: ${packageInfo[0].license_key}\n\nPaket akan berakhir pada: ${humanReadableExpiryDate}`);
+				} else {
+					message.reply(`Hai ${userName}, kamu tidak memiliki paket aktif saat ini. Untuk membeli paket, kirim pesan !donate untuk melihat link donasi.`);
 				}
 			} catch (err) {
 				console.error(err);
