@@ -406,7 +406,7 @@ async function handleIncomingMessage(message: Message) {
 		if (startsWithIgnoreCase(message.body, '!status')) {
 			const userName: string = (message.rawData as any).notifyName as string;
 			try {
-				await initializeUserParam(message.body, userName);
+				await initializeUserParam(message.from, userName);
 				const hasActivePackage = await checkAndUpdateProStatus(message.from);
 				if (hasActivePackage.hasActivePackage) {
 					const activePackageName = hasActivePackage.activePackageName;
