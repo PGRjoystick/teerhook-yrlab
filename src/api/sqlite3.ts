@@ -63,52 +63,6 @@ export function initializeDatabase() {
             packageExpires TEXT,
             FOREIGN KEY(user_id) REFERENCES users(id)
         );`);
-
-        // Check if the user_id column already exists
-        db.all(`PRAGMA table_info(users)`, (err, columns) => {
-            if (err) {
-                console.error(err.message);
-                return;
-            }
-
-            const userIdColumnExists = columns.some(column => column.name === 'user_id');
-            if (!userIdColumnExists) {
-                // Create a new table with the desired schema
-                db.run(`CREATE TABLE IF NOT EXISTS users_new (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT NOT NULL,
-                    user_id TEXT UNIQUE NOT NULL
-                );`, (err) => {
-                    if (err) {
-                        console.error(err.message);
-                        return;
-                    }
-
-                    // Copy data from the old table to the new table
-                    db.run(`INSERT INTO users_new (id, name) SELECT id, name FROM users;`, (err) => {
-                        if (err) {
-                            console.error(err.message);
-                            return;
-                        }
-
-                        // Drop the old table
-                        db.run(`DROP TABLE users;`, (err) => {
-                            if (err) {
-                                console.error(err.message);
-                                return;
-                            }
-
-                            // Rename the new table to the original name
-                            db.run(`ALTER TABLE users_new RENAME TO users;`, (err) => {
-                                if (err) {
-                                    console.error(err.message);
-                                }
-                            });
-                        });
-                    });
-                });
-            }
-        });
     });
 }
 
