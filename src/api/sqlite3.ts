@@ -145,7 +145,7 @@ export function readParam(userID: string, parameterToGet: string): Promise<any> 
     });
 }
 
-export function initializeUserParam(userID: string): Promise<void> {
+export function initializeUserParam(userID: string, username: string): Promise<void> {
     return new Promise((resolve, reject) => {
         db.serialize(() => {
             // Check if the user already exists
@@ -163,7 +163,7 @@ export function initializeUserParam(userID: string): Promise<void> {
                 }
 
                 // Insert new user into users table
-                db.run(`INSERT INTO users (user_id) VALUES (?)`, [userID], function(err) {
+                db.run(`INSERT INTO users (user_id, name) VALUES (?, ?)`, [userID, username], function(err) {
                     if (err) {
                         console.error(`Error inserting user: ${err.message}`);
                         reject(err);
