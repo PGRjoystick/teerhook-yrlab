@@ -119,26 +119,32 @@ export function readParam(userID: string, parameterToGet: string): Promise<any> 
         // Get the user ID from the users table
         db.get(`SELECT id FROM users WHERE user_id = ?`, [userID], (err, row) => {
             if (err) {
+                console.error(`Error retrieving user ID: ${err.message}`);
                 reject(err);
                 return;
             }
             if (!row) {
+                console.error(`User not found: ${userID}`);
                 reject(new Error(`User not found: ${userID}`));
                 return;
             }
             const userIdDb = row.id;
+            console.log(`Retrieved user ID: ${userIdDb} for user: ${userID}`);
 
             // Get the parameter from the parameters table
             const sql = `SELECT ${parameterToGet} FROM parameters WHERE user_id = ?`;
             db.get(sql, [userIdDb], (err, row) => {
                 if (err) {
+                    console.error(`Error retrieving parameter: ${err.message}`);
                     reject(err);
                     return;
                 }
                 if (!row) {
+                    console.error(`Parameter not found for user: ${userID}`);
                     reject(new Error(`Parameter not found for user: ${userID}`));
                     return;
                 }
+                console.log(`Retrieved parameter: ${parameterToGet} for user: ${userID}`);
                 resolve(row[parameterToGet]);
             });
         });
