@@ -65,7 +65,7 @@ export function initializeDatabase() {
         );`);
 
         // Check if the user_id column already exists
-        db.get(`PRAGMA table_info(users)`, (err, columns) => {
+        db.all(`PRAGMA table_info(users)`, (err, columns) => {
             if (err) {
                 console.error(err.message);
                 return;
