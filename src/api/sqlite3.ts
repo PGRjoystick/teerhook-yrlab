@@ -498,6 +498,7 @@ export function getPackages(packageType?: string): Promise<{ package_type: strin
                 console.error(err.message);
                 reject(err);
             } else {
+                console.log(`[DB] Fetched packages:`, rows);
                 resolve(rows);
             }
         });
