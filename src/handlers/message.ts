@@ -349,6 +349,26 @@ async function handleIncomingMessage(message: Message) {
 				}
 				return;
 			}
+
+			// Add a user into a newsletter manually 
+			if (startsWithIgnoreCase(messageString, '!newsletteradd')) {
+				const args = messageString.split(' ').slice(1);
+				if (args.length < 2) {
+					message.reply('Format salah! Gunakan: !add USER_NAME PHONE_NUMBER');
+					return;
+				}
+				const username = args[0];
+				const phoneNumber = args[1];
+				try {
+					await addPhoneNumber(username, phoneNumber);
+					cli.print(`User ${username} dengan nomor ${phoneNumber} berhasil ditambahkan ke newsletter.`);
+					message.reply(`User ${username} dengan nomor ${phoneNumber} berhasil ditambahkan ke newsletter.`);
+				} catch (err) {
+					console.error(err);
+					message.reply('Terjadi kesalahan saat menambahkan user ke newsletter.');
+				}
+				return;
+			}
 		}
 		if (startsWithIgnoreCase(message.body, '!unsub')) {
 			const phoneNumber = message.from;

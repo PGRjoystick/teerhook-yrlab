@@ -151,11 +151,13 @@ export function initializeUserParam(userID: string): Promise<void> {
             // Check if the user already exists
             db.get(`SELECT id FROM users WHERE user_id = ?`, [userID], (err, row) => {
                 if (err) {
+                    console.error(`Error checking user existence: ${err.message}`);
                     reject(err);
                     return;
                 }
                 if (row) {
                     // User already exists, no need to initialize
+                    console.log(`User already exists: ${userID}`);
                     resolve();
                     return;
                 }
@@ -163,10 +165,12 @@ export function initializeUserParam(userID: string): Promise<void> {
                 // Insert new user into users table
                 db.run(`INSERT INTO users (user_id) VALUES (?)`, [userID], function(err) {
                     if (err) {
+                        console.error(`Error inserting user: ${err.message}`);
                         reject(err);
                         return;
                     }
                     const userIdDb = this.lastID;
+                    console.log(`Inserted new user with ID: ${userIdDb}`);
 
                     // Insert default parameters into parameters table
                     db.run(`INSERT INTO parameters (user_id, active_package, packageExpires) VALUES (?, ?, ?)`, 
@@ -176,8 +180,10 @@ export function initializeUserParam(userID: string): Promise<void> {
                         null  // packageExpires
                     ], (err) => {
                         if (err) {
+                            console.error(`Error inserting parameters: ${err.message}`);
                             reject(err);
                         } else {
+                            console.log(`Inserted default parameters for user ID: ${userIdDb}`);
                             resolve();
                         }
                     });
