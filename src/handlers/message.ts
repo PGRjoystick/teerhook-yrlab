@@ -352,13 +352,17 @@ async function handleIncomingMessage(message: Message) {
 
 			// Add a user into a newsletter manually 
 			if (startsWithIgnoreCase(messageString, '!newsletteradd')) {
-				const args = messageString.split(' ').slice(1);
-				if (args.length < 2) {
-					message.reply('Format salah! Gunakan: !add USER_NAME PHONE_NUMBER');
+				const regex = /!newsletteradd\s+'([^']+)'\s+(\S+)/;
+				const match = messageString.match(regex);
+			
+				if (!match) {
+					message.reply('Format salah! Gunakan: !newsletteradd \'USER_NAME\' PHONE_NUMBER');
 					return;
 				}
-				const username = args[0];
-				const phoneNumber = args[1];
+			
+				const username = match[1];
+				const phoneNumber = match[2];
+			
 				try {
 					await addPhoneNumber(username, phoneNumber);
 					cli.print(`User ${username} dengan nomor ${phoneNumber} berhasil ditambahkan ke newsletter.`);
