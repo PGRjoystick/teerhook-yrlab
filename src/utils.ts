@@ -145,4 +145,13 @@ export async function checkAndUpdateProStatus(userId: string): Promise<{ hasActi
     }
   
     return { hasActivePackage, activePackageName, expiryDate };
+}
+
+export function normalizeWhiteSpaces(messageBody: string) {
+    if (!messageBody) {
+        return '';
+    }
+    // Normalize whitespace
+    const normalizedMessageBody = messageBody.replace(/\s+/g, ' ').trim();
+    return normalizedMessageBody;
   }

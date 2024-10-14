@@ -1,5 +1,5 @@
 import { Message, MessageTypes } from "whatsapp-web.js";
-import { startsWithIgnoreCase, broadcastMessage, checkAndUpdateProStatus } from "../utils";
+import { startsWithIgnoreCase, broadcastMessage, checkAndUpdateProStatus, normalizeWhiteSpaces } from "../utils";
 import { client } from "../index";
 import { getPhoneNumbersByLocation, getPhoneNumbersByLocationPrefix, getAllPhoneNumbers, addUser, deleteUser, changePackageKey, changePackagePrice, createPackage, deletePackage, getUserIdByPhoneNumber, getPackages, getUserAndPhoneNumbers, deletePhoneNumber, addPhoneNumber, initializeUserParam } from "../api/sqlite3";
 
@@ -26,7 +26,7 @@ function isWhitelisted(phoneNumber: string): boolean {
 
 // Handles message
 async function handleIncomingMessage(message: Message) {
-	let messageString = message.body;
+	const messageString = normalizeWhiteSpaces(message.body);
 	// Prevent handling old messages
 	if (message.timestamp != null) {
 		const messageTimestamp = new Date(message.timestamp * 1000);
@@ -48,10 +48,10 @@ async function handleIncomingMessage(message: Message) {
 	if (!(await message.getChat()).isGroup && !message.hasMedia) {
 		// access control
 		if (isWhitelisted(message.author || message.from)) {
-			cli.print(`[Access Control] Command input dari ${message.from}: "${message.body}"`);
+			cli.print(`[Access Control] Command input dari ${message.from}: "${messageString}"`);
 			// send message to all users by location prefix
-			if (startsWithIgnoreCase(message.body, '!castlocprefix')) {
-				const args = message.body.split(' ').slice(1);
+			if (startsWithIgnoreCase(messageString, '!castlocprefix')) {
+				const args = messageString.split(' ').slice(1);
 				if (args.length < 2) {
 					message.reply('Format salah! Gunakan: !castlocprefix LOCATION_PREFIX message');
 					return;
@@ -73,8 +73,8 @@ async function handleIncomingMessage(message: Message) {
 			}
 
 			// send message to all users by location
-			if (startsWithIgnoreCase(message.body, '!castloc')) {
-				const args = message.body.split(' ').slice(1);
+			if (startsWithIgnoreCase(messageString, '!castloc')) {
+				const args = messageString.split(' ').slice(1);
 				if (args.length < 2) {
 					message.reply('Format salah! Gunakan: !castloc LOCATION message');
 					return;
@@ -96,8 +96,8 @@ async function handleIncomingMessage(message: Message) {
 			}
 			
 			// broadcast message
-			if (startsWithIgnoreCase(message.body, '!castjson')) {
-				const messageBody = message.body.substring('!castjson'.length + 1);
+			if (startsWithIgnoreCase(messageString, '!castjson')) {
+				const messageBody = messageString.substring('!castjson'.length + 1);
 				try {
 					await broadcastMessage(messageBody);
 					message.reply('Pesan telah di kirim ke semua nomor yang terdaftar');
@@ -109,7 +109,7 @@ async function handleIncomingMessage(message: Message) {
 			}
 
 			// print a list of phone number and username
-			if (startsWithIgnoreCase(message.body, '!sublist')) {
+			if (startsWithIgnoreCase(messageString, '!sublist')) {
 				const phoneNumbers = await getUserAndPhoneNumbers();
 				const formattedOutput = phoneNumbers.map(row => `Phone numbers: ${row.phoneNumber} | Usernames: ${row.userId}`).join('\n');
 				message.reply(formattedOutput);
@@ -117,9 +117,9 @@ async function handleIncomingMessage(message: Message) {
 			}
 
 			// broadcast message
-			if (startsWithIgnoreCase(message.body, '!cast')) {
+			if (startsWithIgnoreCase(messageString, '!cast')) {
 				const footer = '\n\n##################\nPesan ini dikirim kepada user yang berlangganan newsletter yuri lab. untuk berhenti berlangganan, balas pesan ini dengan `!unsub`';
-				const messageBody = message.body.substring('!cast'.length + 1);
+				const messageBody = messageString.substring('!cast'.length + 1);
 				const phoneNumbers = await getAllPhoneNumbers();
 				const phoneNumberStrings = phoneNumbers.map(row => row.phone_number);
 				console.log(phoneNumberStrings);
@@ -218,8 +218,7 @@ async function handleIncomingMessage(message: Message) {
 			// pkgpricechange
 			if (startsWithIgnoreCase(messageString, '!pkgpricechange')) {
 				// Normalize whitespace by replacing all whitespace characters with a single space
-				const normalizedMessage = messageString.replace(/\s+/g, ' ').trim();
-				const args = normalizedMessage.split(' ').slice(1).map(arg => arg.trim());
+				const args = messageString.split(' ').slice(1).map(arg => arg.trim());
 				if (args.length < 2) {
 					message.reply('Format salah! Gunakan: !pkgpricechange Nama_Paket Harga_baru');
 					return;
@@ -374,7 +373,7 @@ async function handleIncomingMessage(message: Message) {
 				return;
 			}
 		}
-		if (startsWithIgnoreCase(message.body, '!unsub')) {
+		if (startsWithIgnoreCase(messageString, '!unsub')) {
 			const phoneNumber = message.from;
 		
 			try {
@@ -393,7 +392,7 @@ async function handleIncomingMessage(message: Message) {
 			return;
 		}
 		// subscribe
-		if (startsWithIgnoreCase(message.body, '!sub')) {
+		if (startsWithIgnoreCase(messageString, '!sub')) {
 			const phoneNumber = message.from;
 			const userName: string = (message.rawData as any).notifyName as string;
 			try {
@@ -407,7 +406,7 @@ async function handleIncomingMessage(message: Message) {
 			return;
 		}
 		// check status for user (!status)
-		if (startsWithIgnoreCase(message.body, '!status')) {
+		if (startsWithIgnoreCase(messageString, '!status')) {
 			const userName: string = (message.rawData as any).notifyName as string;
 			try {
 				await initializeUserParam(message.from, userName);
@@ -433,6 +432,6 @@ async function handleIncomingMessage(message: Message) {
 			return;
 		}
 	}
-	cli.print(`[Message] Pesan masuk dari ${message.from}: ${message.body}`);
+	cli.print(`[Message] Pesan masuk dari ${message.from}: ${messageString}`);
 } 
 export { handleIncomingMessage };
