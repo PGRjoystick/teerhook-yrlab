@@ -187,7 +187,8 @@ export async function createUser(params: CreateUserParams): Promise<any> {
     const data = new URLSearchParams();
     data.append('swpm_api_action', 'create');
     data.append('key', apiKey || '');
-    data.append('first_name', params.first_name);
+    data.append('user_name', params.username);
+    data.append('first_name', params.first_name || '');
     data.append('last_name', params.last_name || '');
     data.append('email', params.email);
     data.append('password', params.password);

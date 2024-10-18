@@ -137,7 +137,7 @@ export function initializeWebhookServer() {
                     username = generateRandomString(8); // Generate a random username if the supporter name is "Seseorang"
                 }
                 const newUser = {
-                    first_name: username,
+                    username: username,
                     email: email,
                     password: generateRandomString(8),
                     membership_level: selectedPackage.id
