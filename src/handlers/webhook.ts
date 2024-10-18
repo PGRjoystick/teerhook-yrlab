@@ -143,9 +143,8 @@ export function initializeWebhookServer() {
                     membership_level: selectedPackage.id
                 };
                 const userResult = await createUser(newUser);
-                await sendEmail(email, 'Terima Kasih atas Donasi Anda!', `Yay 🥳 Terima kasih telah berdonasi sebesar Rp. ${paymentPayload.price} untuk paket ${selectedPackage.package_type}! 🔑 dibawah ini adalah detail akun yurilab untuk kamu.\n\nUsername : ${userResult.user_name}\nPassword : ${newUser.password}\nEmail : ${email}\n\nMakasih banyak yah sekali lagi 😉`);
+                await sendEmail(email, 'Terima Kasih atas Donasi Anda!', `Yay 🥳 Terima kasih telah berdonasi sebesar Rp. ${paymentPayload.price} untuk paket ${selectedPackage.package_type}! 🔑 dibawah ini adalah detail akun yurilab untuk kamu.\n\nUsername : ${newUser.username}\nPassword : ${newUser.password}\nEmail : ${email}\n\nMakasih banyak yah sekali lagi 😉`);
             }
-            await addPhoneNumber(paymentPayload.supporter_name, email);
         }
 
         // Send a response back to the external service
