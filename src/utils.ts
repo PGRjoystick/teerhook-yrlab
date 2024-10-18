@@ -160,7 +160,7 @@ export function normalizeWhiteSpaces(messageBody: string) {
 // Function to send an email
 export async function sendEmail(to: string, subject: string, text: string) {
     let transporter = nodemailer.createTransport({
-        host: 'smtp.example.com', // Replace with your SMTP server
+        host: process.env.SMTP_HOST,
         port: 587,
         secure: false, // true for 465, false for other ports
         auth: {
