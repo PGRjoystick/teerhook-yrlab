@@ -128,6 +128,7 @@ export function initializeWebhookServer() {
         }
 
         // Send email if the supporter message contains email
+        console.log('###################### Email:', email);
         if (email) {
             cli.print(`[Donasi] Mengirim license key dan ucapan terima kasih dan rewards ke ${email}`);
             if (selectedPackage) {
