@@ -2,9 +2,12 @@ import axios from 'axios';
 
 export async function changePasswordProtectedPostsByCategory(categoryName: string, password: string) {
     const wpUrl = process.env.WORDPRESS_URL || '';
-    const authToken = process.env.WORDPRESS_AUTH_TOKEN || '';
+    const username = process.env.WORDPRESS_USERNAME || '';
+    const applicationPassword = process.env.WORDPRESS_APP_PASSWORD || '';
+    const authHeader = `Basic ${Buffer.from(`${username}:${applicationPassword}`).toString('base64')}`;
+
     try {
-        const categoryId = await getCategoryIDByName(categoryName, wpUrl, authToken);
+        const categoryId = await getCategoryIDByName(categoryName, wpUrl, authHeader);
         if (categoryId === null) {
             return;
         }
@@ -15,7 +18,7 @@ export async function changePasswordProtectedPostsByCategory(categoryName: strin
                 categories: categoryId
             },
             headers: {
-                'Authorization': `Bearer ${authToken}`
+                'Authorization': authHeader
             }
         });
 
@@ -27,7 +30,7 @@ export async function changePasswordProtectedPostsByCategory(categoryName: strin
                 password: password
             }, {
                 headers: {
-                    'Authorization': `Bearer ${authToken}`
+                    'Authorization': authHeader
                 }
             });
         }
@@ -37,7 +40,6 @@ export async function changePasswordProtectedPostsByCategory(categoryName: strin
         console.error('Error updating posts:', error);
     }
 }
-
 async function getCategoryIDByName(categoryName: string, wpUrl: string, authToken: string): Promise<number | null> {
     try {
         const response = await axios.get(`${wpUrl}/wp-json/wp/v2/categories`, {
