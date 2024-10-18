@@ -12,6 +12,7 @@ import * as cli from "../cli/ui";
 
 // For deciding to ignore old messages
 import { botReadyTimestamp } from "../index";
+import { changePasswordProtectedPostsByCategory } from "../api/wordpress";
 
 function delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -215,6 +216,27 @@ async function handleIncomingMessage(message: Message) {
 				return;
 			}
 			
+			// pwchange
+			if (startsWithIgnoreCase(messageString, '!pwchange')) {
+				// Normalize whitespace by replacing all whitespace characters with a single space
+				const args = messageString.split(' ').slice(1).map(arg => arg.trim());
+				if (args.length < 2) {
+					message.reply('Format salah! Gunakan: !pwchange USER_NAME NEW_PASSWORD');
+					return;
+				}
+				const category = args[0];
+				const newPassword = args[1];
+				try {
+					await changePasswordProtectedPostsByCategory(category, newPassword);
+					cli.print(`Password ${category} berhasil diubah`);
+					message.reply(`Password ${category} berhasil diubah`);
+				} catch(err) {
+					console.error(err);
+					message.reply('Terjadi kesalahan saat mengubah password.');
+				};
+				return;
+			}
+
 			// pkgpricechange
 			if (startsWithIgnoreCase(messageString, '!pkgpricechange')) {
 				// Normalize whitespace by replacing all whitespace characters with a single space

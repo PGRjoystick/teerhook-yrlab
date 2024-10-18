@@ -105,14 +105,14 @@ export async function activatePackage(userID: string, packageId: string) {
             if (currentExpiration > new Date()) {
                 expirationDate = currentExpiration;
             }
-            expirationDate.setDate(expirationDate.getDate() + 30);
+            expirationDate.setDate(expirationDate.getDate() + 15);
         } else {
             // If the active package name is different from the packageId, set expiration date to 30 days from now
-            expirationDate.setDate(expirationDate.getDate() + 30);
+            expirationDate.setDate(expirationDate.getDate() + 15);
         }
     } else {
         // If not a pro user, set expiration date to 30 days from now
-        expirationDate.setDate(expirationDate.getDate() + 30);
+        expirationDate.setDate(expirationDate.getDate() + 15);
     }
 
     cli.print(`[Package Subscription Manager] Melakukan Aktivasi paket ${packageId} pada nomor ${userID}`);
