@@ -483,9 +483,9 @@ export function getLicenseKey(packageType: string): Promise<string> {
     });
 }
 
-export function getPackages(packageType?: string): Promise<{ package_type: string, price: number, license_key: string }[]> {
+export function getPackages(packageType?: string): Promise<{ id: number, package_type: string, price: number, license_key: string }[]> {
     return new Promise((resolve, reject) => {
-        let query = `SELECT package_type, price, license_key FROM packages`;
+        let query = `SELECT id, package_type, price, license_key FROM packages`;
         const params: any[] = [];
 
         if (packageType) {
