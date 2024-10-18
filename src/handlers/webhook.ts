@@ -142,8 +142,6 @@ export function initializeWebhookServer() {
                     password: generateRandomString(8),
                     membership_level: selectedPackage.id
                 };
-                await initializeUserParam(email, paymentPayload.supporter_name);
-                await activatePackage(email, selectedPackage.package_type);
                 const userResult = await createUser(newUser);
                 await sendEmail(email, 'Terima Kasih atas Donasi Anda!', `Yay 🥳 Terima kasih telah berdonasi sebesar Rp. ${paymentPayload.price} untuk paket ${selectedPackage.package_type}! 🔑 dibawah ini adalah detail akun yurilab untuk kamu.\n\nUsername : ${userResult.user_name}\nPassword : ${newUser.password}\nEmail : ${email}\n\nMakasih banyak yah sekali lagi 😉`);
             }
