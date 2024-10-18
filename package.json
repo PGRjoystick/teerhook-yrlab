@@ -13,6 +13,7 @@
     "axios": "^1.7.7",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "nodemailer": "^6.9.15",
     "npx": "^10.2.2",
     "picocolors": "^1.1.0",
     "qrcode": "^1.5.4",

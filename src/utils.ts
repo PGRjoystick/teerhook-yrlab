@@ -7,6 +7,7 @@ import * as cli from "./cli/ui";
 import axios from 'axios';
 import { LastTransactionPayload } from './types/trakteer';
 import { Message } from 'whatsapp-web.js';
+import nodemailer from 'nodemailer';
 
 const startsWithIgnoreCase = (str, prefix) => str.toLowerCase().startsWith(prefix.toLowerCase());
 
@@ -154,4 +155,73 @@ export function normalizeWhiteSpaces(messageBody: string) {
     // Normalize whitespace
     const normalizedMessageBody = messageBody.replace(/\s+/g, ' ').trim();
     return normalizedMessageBody;
-  }
+}
+
+// Function to send an email
+export async function sendEmail(to: string, subject: string, text: string) {
+    let transporter = nodemailer.createTransport({
+        host: 'smtp.example.com', // Replace with your SMTP server
+        port: 587,
+        secure: false, // true for 465, false for other ports
+        auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASSWORD
+        }
+    });
+
+    let info = await transporter.sendMail({
+        from: process.env.SMTP_FROM,
+        to: to,
+        subject: subject,
+        text: text
+    });
+
+    console.log('Message sent: %s', info.messageId);
+}
+
+// Create user on SWPM API
+export async function createUser(params: CreateUserParams): Promise<any> {
+    const apiUrl = 'https://yurilab.my.id/';
+    const apiKey = process.env.SWPM_API_KEY;
+
+    const data = new URLSearchParams();
+    data.append('swpm_api_action', 'create');
+    data.append('key', apiKey || '');
+    data.append('first_name', params.first_name);
+    data.append('last_name', params.last_name || '');
+    data.append('email', params.email);
+    data.append('password', params.password);
+    data.append('account_state', 'active');
+    data.append('membership_level', params.membership_level.toString());
+
+    try {
+        const response = await axios.post(apiUrl, data, {
+            headers: {
+                'User-Agent': 'curl',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        });
+        console.log('User created successfully:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('Error creating user:', error.response ? error.response.data : error.message);
+        throw error;
+    }
+}
+
+// Function to generate a random string
+export function generateRandomString(length: number): string {
+    const chars = 'abcdefghijklmnopqrstuvwxyz';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
+// Function to generate a random number with a specified number of digits
+export function generateRandomNumber(length: number): number {
+    const min = Math.pow(10, length - 1);
+    const max = Math.pow(10, length) - 1;
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
