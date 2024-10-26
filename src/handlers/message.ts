@@ -27,6 +27,15 @@ function isWhitelisted(phoneNumber: string): boolean {
 
 // Handles message
 async function handleIncomingMessage(message: Message) {
+
+	// preparing send typing state to 25 sec interval
+	const typingInterval = setInterval(sendTypingState, 25000)
+	async function sendTypingState() {
+		const readchat = await message.getChat();
+		readchat.sendStateTyping();
+	}	
+	const readchat = await message.getChat();
+	
 	const messageString = normalizeWhiteSpaces(message.body);
 	// Prevent handling old messages
 	if (message.timestamp != null) {
@@ -62,6 +71,10 @@ async function handleIncomingMessage(message: Message) {
 				const phoneNumbers = await getPhoneNumbersByLocationPrefix(locationPrefix);
 				const phoneNumberStrings = phoneNumbers.map(row => row.phone_number);
 				console.log(phoneNumberStrings);
+
+				//send whatsapp state to typing
+				await readchat.sendStateTyping();
+
 				if (Array.isArray(phoneNumbers)) {
 					for (const phoneNumber of phoneNumberStrings) {
 						client.sendMessage(phoneNumber, messageBody);
@@ -70,6 +83,9 @@ async function handleIncomingMessage(message: Message) {
 					}
 				}
 				message.reply('Pesan telah di kirim ke semua nomor yang terdaftar di lokasi tersebut');
+				//clear typing status
+				clearInterval(typingInterval);
+				readchat.clearState();
 				return;
 			}
 
@@ -85,6 +101,10 @@ async function handleIncomingMessage(message: Message) {
 				const phoneNumbers = await getPhoneNumbersByLocation(location);
 				const phoneNumberStrings = phoneNumbers.map(row => row.phone_number);
 				console.log(phoneNumberStrings);
+
+				//send whatsapp state to typing
+				await readchat.sendStateTyping();
+
 				if (Array.isArray(phoneNumbers)) {
 					for (const phoneNumber of phoneNumberStrings) {
 						client.sendMessage(phoneNumber, messageBody);
@@ -93,12 +113,17 @@ async function handleIncomingMessage(message: Message) {
 					}
 				}
 				message.reply('Pesan telah di kirim ke semua nomor yang terdaftar di lokasi tersebut');
+				//clear typing status
+				clearInterval(typingInterval);
+				readchat.clearState();
 				return;
 			}
 			
 			// broadcast message
 			if (startsWithIgnoreCase(messageString, '!castjson')) {
 				const messageBody = messageString.substring('!castjson'.length + 1);
+				//send whatsapp state to typing
+				await readchat.sendStateTyping();
 				try {
 					await broadcastMessage(messageBody);
 					message.reply('Pesan telah di kirim ke semua nomor yang terdaftar');
@@ -106,6 +131,9 @@ async function handleIncomingMessage(message: Message) {
 					console.error(err);
 					message.reply('Terjadi kesalahan saat mengirim pesan broadcast.');
 				}
+				//clear typing status
+				clearInterval(typingInterval);
+				readchat.clearState();
 				return;
 			}
 
@@ -124,6 +152,8 @@ async function handleIncomingMessage(message: Message) {
 				const phoneNumbers = await getAllPhoneNumbers();
 				const phoneNumberStrings = phoneNumbers.map(row => row.phone_number);
 				console.log(phoneNumberStrings);
+				//send whatsapp state to typing
+				await readchat.sendStateTyping();
 				if (Array.isArray(phoneNumbers)) {
 					for (const phoneNumber of phoneNumberStrings) {
 						const username = await getUserIdByPhoneNumber(phoneNumber);
@@ -134,6 +164,9 @@ async function handleIncomingMessage(message: Message) {
 					}
 				}
 				message.reply('Pesan telah di kirim ke semua nomor yang terdaftar');
+				//clear typing status
+				clearInterval(typingInterval);
+				readchat.clearState();
 				return;
 			}
 
@@ -216,26 +249,26 @@ async function handleIncomingMessage(message: Message) {
 				return;
 			}
 			
-			// pwchange
-			if (startsWithIgnoreCase(messageString, '!pwchange')) {
-				// Normalize whitespace by replacing all whitespace characters with a single space
-				const args = messageString.split(' ').slice(1).map(arg => arg.trim());
-				if (args.length < 2) {
-					message.reply('Format salah! Gunakan: !pwchange USER_NAME NEW_PASSWORD');
-					return;
-				}
-				const category = args[0];
-				const newPassword = args[1];
-				try {
-					await changePasswordProtectedPostsByCategory(category, newPassword);
-					cli.print(`Password ${category} berhasil diubah`);
-					message.reply(`Password ${category} berhasil diubah`);
-				} catch(err) {
-					console.error(err);
-					message.reply('Terjadi kesalahan saat mengubah password.');
-				};
-				return;
-			}
+			// // pwchange
+			// if (startsWithIgnoreCase(messageString, '!pwchange')) {
+			// 	// Normalize whitespace by replacing all whitespace characters with a single space
+			// 	const args = messageString.split(' ').slice(1).map(arg => arg.trim());
+			// 	if (args.length < 2) {
+			// 		message.reply('Format salah! Gunakan: !pwchange USER_NAME NEW_PASSWORD');
+			// 		return;
+			// 	}
+			// 	const category = args[0];
+			// 	const newPassword = args[1];
+			// 	try {
+			// 		await changePasswordProtectedPostsByCategory(category, newPassword);
+			// 		cli.print(`Password ${category} berhasil diubah`);
+			// 		message.reply(`Password ${category} berhasil diubah`);
+			// 	} catch(err) {
+			// 		console.error(err);
+			// 		message.reply('Terjadi kesalahan saat mengubah password.');
+			// 	};
+			// 	return;
+			// }
 
 			// pkgpricechange
 			if (startsWithIgnoreCase(messageString, '!pkgpricechange')) {
@@ -266,6 +299,8 @@ async function handleIncomingMessage(message: Message) {
 					message.reply('Format salah! Gunakan: !pkgkeychange Nama_Paket Key_baru');
 					return;
 				}
+				//send whatsapp state to typing
+				await readchat.sendStateTyping();
 				const packageKey = args[0];
 				const newKey = args[1];
 				try {
@@ -276,6 +311,9 @@ async function handleIncomingMessage(message: Message) {
 					console.error(err);
 					message.reply('Terjadi kesalahan saat mengubah key.');
 				};
+				//clear typing status
+				clearInterval(typingInterval);
+				readchat.clearState();
 				return;
 			}
 
