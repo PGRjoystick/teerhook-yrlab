@@ -27,14 +27,6 @@ function isWhitelisted(phoneNumber: string): boolean {
 
 // Handles message
 async function handleIncomingMessage(message: Message) {
-
-	// preparing send typing state to 25 sec interval
-	const typingInterval = setInterval(sendTypingState, 25000)
-	async function sendTypingState() {
-		const readchat = await message.getChat();
-		readchat.sendStateTyping();
-	}	
-	const readchat = await message.getChat();
 	
 	const messageString = normalizeWhiteSpaces(message.body);
 	// Prevent handling old messages
@@ -56,6 +48,14 @@ async function handleIncomingMessage(message: Message) {
 	
 	// Private Message
 	if (!(await message.getChat()).isGroup && !message.hasMedia) {
+
+		// preparing send typing state to 25 sec interval
+		const typingInterval = setInterval(sendTypingState, 25000)
+		async function sendTypingState() {
+			const readchat = await message.getChat();
+			readchat.sendStateTyping();
+		}	
+		
 		// access control
 		if (isWhitelisted(message.author || message.from)) {
 			cli.print(`[Access Control] Command input dari ${message.from}: "${messageString}"`);
@@ -72,7 +72,8 @@ async function handleIncomingMessage(message: Message) {
 				const phoneNumberStrings = phoneNumbers.map(row => row.phone_number);
 				console.log(phoneNumberStrings);
 
-				//send whatsapp state to typing
+				//send whatsapp state to typing\
+				const readchat = await message.getChat();
 				await readchat.sendStateTyping();
 
 				if (Array.isArray(phoneNumbers)) {
@@ -103,6 +104,7 @@ async function handleIncomingMessage(message: Message) {
 				console.log(phoneNumberStrings);
 
 				//send whatsapp state to typing
+				const readchat = await message.getChat();
 				await readchat.sendStateTyping();
 
 				if (Array.isArray(phoneNumbers)) {
@@ -123,6 +125,7 @@ async function handleIncomingMessage(message: Message) {
 			if (startsWithIgnoreCase(messageString, '!castjson')) {
 				const messageBody = messageString.substring('!castjson'.length + 1);
 				//send whatsapp state to typing
+				const readchat = await message.getChat();
 				await readchat.sendStateTyping();
 				try {
 					await broadcastMessage(messageBody);
@@ -153,6 +156,7 @@ async function handleIncomingMessage(message: Message) {
 				const phoneNumberStrings = phoneNumbers.map(row => row.phone_number);
 				console.log(phoneNumberStrings);
 				//send whatsapp state to typing
+				const readchat = await message.getChat();
 				await readchat.sendStateTyping();
 				if (Array.isArray(phoneNumbers)) {
 					for (const phoneNumber of phoneNumberStrings) {
@@ -300,6 +304,7 @@ async function handleIncomingMessage(message: Message) {
 					return;
 				}
 				//send whatsapp state to typing
+				const readchat = await message.getChat();
 				await readchat.sendStateTyping();
 				const packageKey = args[0];
 				const newKey = args[1];
