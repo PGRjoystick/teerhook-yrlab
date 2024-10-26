@@ -437,6 +437,9 @@ async function handleIncomingMessage(message: Message) {
 				}
 				return;
 			}
+			//clear typing status
+			clearInterval(typingInterval);
+			return;
 		}
 		if (startsWithIgnoreCase(messageString, '!unsub')) {
 			const phoneNumber = message.from;
