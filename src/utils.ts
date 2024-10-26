@@ -8,6 +8,7 @@ import axios from 'axios';
 import { LastTransactionPayload } from './types/trakteer';
 import { Message } from 'whatsapp-web.js';
 import nodemailer from 'nodemailer';
+import { CreateUserParams } from './types/swpm';
 
 const startsWithIgnoreCase = (str, prefix) => str.toLowerCase().startsWith(prefix.toLowerCase());
 

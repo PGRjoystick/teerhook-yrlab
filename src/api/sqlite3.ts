@@ -3,6 +3,7 @@ import * as cli from "../cli/ui";
 let db: any;
 import fs from 'fs';
 import path from 'path';
+import { changePasswordProtectedPostsByCategory } from "./wordpress";
 
 export function getAllPhoneNumbersFromJson(): Promise<string[]> {
     return new Promise((resolve, reject) => {
@@ -415,14 +416,30 @@ export async function deleteUser(username: string): Promise<boolean> {
     });
 }
 
-export function changePackageKey(packageType: string, newKey: string): Promise<void> {
+export async function changePackageKey(packageType: string, newKey: string): Promise<void> {
     return new Promise((resolve, reject) => {
-        db.run(`UPDATE packages SET license_key = ? WHERE package_type = ?`, [newKey, packageType], function(err) {
+        db.get(`SELECT wp_package_id FROM packages WHERE package_type = ?`, [packageType], async function(err, row) {
             if (err) {
                 console.error(err.message);
                 reject(err);
+            } else if (row) {
+                const category = row.wp_package_id;
+                try {
+                    await changePasswordProtectedPostsByCategory(category, newKey);
+                    db.run(`UPDATE packages SET license_key = ? WHERE package_type = ?`, [newKey, packageType], function(err) {
+                        if (err) {
+                            console.error(err.message);
+                            reject(err);
+                        } else {
+                            resolve();
+                        }
+                    });
+                } catch (error) {
+                    console.error(error.message);
+                    reject(error);
+                }
             } else {
-                resolve();
+                reject(new Error('Package type not found'));
             }
         });
     });

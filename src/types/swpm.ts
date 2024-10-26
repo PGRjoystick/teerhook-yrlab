@@ -1,4 +1,4 @@
-interface CreateUserParams {
+export interface CreateUserParams {
     username: string;
     first_name?: string;
     last_name?: string;
