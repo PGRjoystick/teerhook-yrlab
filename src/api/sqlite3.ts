@@ -3,7 +3,7 @@ import * as cli from "../cli/ui";
 let db: any;
 import fs from 'fs';
 import path from 'path';
-import { changePasswordProtectedPostsByCategory } from "./wordpress";
+import { changePasswordProtectedPostsByCategory, updatePostPassword } from "./wordpress";
 
 export function getAllPhoneNumbersFromJson(): Promise<string[]> {
     return new Promise((resolve, reject) => {
@@ -423,9 +423,9 @@ export async function changePackageKey(packageType: string, newKey: string): Pro
                 console.error(err.message);
                 reject(err);
             } else if (row) {
-                const category = row.wp_package_id;
+                const tagId = row.wp_package_id;
                 try {
-                    await changePasswordProtectedPostsByCategory(category, newKey);
+                    await updatePostPassword(tagId, newKey);
                     db.run(`UPDATE packages SET license_key = ? WHERE package_type = ?`, [newKey, packageType], function(err) {
                         if (err) {
                             console.error(err.message);
