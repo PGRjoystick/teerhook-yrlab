@@ -72,7 +72,7 @@ async function handleIncomingMessage(message: Message) {
 				const phoneNumberStrings = phoneNumbers.map(row => row.phone_number);
 				console.log(phoneNumberStrings);
 
-				//send whatsapp state to typing\
+				//send whatsapp state to typing
 				const readchat = await message.getChat();
 				await readchat.sendStateTyping();
 
@@ -499,6 +499,8 @@ async function handleIncomingMessage(message: Message) {
 			}
 			return;
 		}
+		//clear typing status
+		clearInterval(typingInterval);
 	}
 	cli.print(`[Message] Pesan masuk dari ${message.from}: ${messageString}`);
 } 
