@@ -12,7 +12,7 @@ const fetchPostIdsByTagId = async (tagId: number): Promise<number[]> => {
         const response = await axios.get(`${siteUrl}/wp-json/wp/v2/posts`, {
             params: {
                 tags: tagId,
-                per_page: 200, 
+                per_page: 100, 
                 page: 1
             },
         });
