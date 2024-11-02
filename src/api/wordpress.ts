@@ -6,23 +6,34 @@ const username = process.env.WORDPRESS_USERNAME || '';
 const password = process.env.WORDPRESS_APP_PASSWORD || '';
 const filteredPostIds = [66547, 66379, 66380]; 
 
-// Function to fetch post IDs based on tag ID
 const fetchPostIdsByTagId = async (tagId: number): Promise<number[]> => {
-    try {
-        const response = await axios.get(`${siteUrl}/wp-json/wp/v2/posts`, {
-            params: {
-                tags: tagId,
-                per_page: 100, 
-                page: 1
-            },
-        });
+    const postIds: number[] = [];
+    let page = 1;
+    let totalPages = 1;
 
-        // Extract post IDs from the response
-        return response.data.map((post: { id: number }) => post.id);
+    try {
+        while (page <= totalPages) {
+            const response = await axios.get(`${siteUrl}/wp-json/wp/v2/posts`, {
+                params: {
+                    tags: tagId,
+                    per_page: 100,
+                    page: page
+                },
+            });
+
+            // Extract post IDs from the response
+            const ids = response.data.map((post: { id: number }) => post.id);
+            postIds.push(...ids);
+
+            // Get the total number of pages from the response headers
+            totalPages = parseInt(response.headers['x-wp-totalpages'], 10);
+            page++;
+        }
     } catch (error) {
         console.error(`Error fetching posts for tag ID ${tagId}:`, error);
-        return [];
     }
+
+    return postIds;
 };
 
 export const updatePostPassword = async (tagId: number, newPassword: string) => {
