@@ -56,7 +56,7 @@ export const updatePostPassword = async (tagId: number, newPassword: string) => 
                         },
                     }
                 );
-                console.log(`Updated post ${postId}:`, response.data);
+                console.log(`Updated post ${postId}`);
             } catch (error) {
                 console.error(`Error updating post ${postId}:`, error);
             }
