@@ -333,10 +333,14 @@ async function handleIncomingMessage(message: Message) {
 						const formattedPackages = packages.map(pkg => `- Nama Paket: ${pkg.package_type}, Harga: ${pkg.price}, License Key: ${pkg.license_key}`);
 						const response = pkgList + formattedPackages.join('\n');
 						message.reply(response);
+						clearInterval(typingInterval);
+						return;
 					}
 				} catch (err) {
 					message.reply('Terjadi kesalahan saat mengambil paket.');
 					console.error(err.message);
+					clearInterval(typingInterval);
+					return;
 				}
 				return;
 			}
