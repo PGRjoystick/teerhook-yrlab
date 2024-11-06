@@ -4,7 +4,6 @@ import axios from 'axios';
 const siteUrl = process.env.WORDPRESS_URL || '';
 const username = process.env.WORDPRESS_USERNAME || '';
 const password = process.env.WORDPRESS_APP_PASSWORD || '';
-const filteredPostIds = [66547, 66379, 66380]; 
 
 const fetchPostIdsByTagId = async (tagId: number): Promise<number[]> => {
     const postIds: number[] = [];
@@ -40,26 +39,48 @@ export const updatePostPassword = async (tagId: number, newPassword: string) => 
     try {
         const postIds = await fetchPostIdsByTagId(tagId);
         for (const postId of postIds) {
-            try {
-                const response = await axios.post(
-                    `${siteUrl}/wp-json/wp/v2/posts/${postId}`,
-                    {
-                        password: newPassword,
-                    },
-                    {
-                        auth: {
-                            username,
-                            password,
+            let attempts = 0;
+            const maxAttempts = 5;
+            let success = false;
+
+            while (attempts < maxAttempts && !success) {
+                try {
+                    const response = await axios.post(
+                        `${siteUrl}/wp-json/wp/v2/posts/${postId}`,
+                        {
+                            password: newPassword,
                         },
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
+                        {
+                            auth: {
+                                username,
+                                password,
+                            },
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                        }
+                    );
+                    console.log(`Updated post ${postId}`);
+                    success = true;
+                } catch (error) {
+                    if (error.response && error.response.status === 503) {
+                        attempts++;
+                        console.error(`Error 503 updating post ${postId}, attempt ${attempts}:`, error);
+                        if (attempts < maxAttempts) {
+                            // wait 5 seconds before retrying
+                            await new Promise((resolve) => setTimeout(resolve, 5000));
+                        } else {
+                            console.error(`Failed to update post ${postId} after ${maxAttempts} attempts`);
+                        }
+                    } else {
+                        console.error(`Error updating post ${postId}:`, error);
+                        break;
                     }
-                );
-                console.log(`Updated post ${postId}`);
-            } catch (error) {
-                console.error(`Error updating post ${postId}:`, error);
+                }
             }
+
+            // wait 5 seconds before updating the next post
+            await new Promise((resolve) => setTimeout(resolve, 5000));
         }
     } catch (error) {
         console.error(`Error updating posts for tag ID ${tagId}:`, error);
