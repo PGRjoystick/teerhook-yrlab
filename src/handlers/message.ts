@@ -441,6 +441,23 @@ async function handleIncomingMessage(message: Message) {
 				}
 				return;
 			}
+
+			// debug print chat id (!chatid)
+			if (startsWithIgnoreCase(messageString, '!chatid')) {
+				console.log(message.rawData);
+				const userName: string = (message.rawData as any).notifyName as string;
+				message.reply("ID Nomor Ayana : "+message.to);
+				message.reply("Username Pengirim : "+userName);
+				if (message.author) {
+					message.reply("Message Author jika ini grup chat : "+message.author);
+					message.reply("ID Grup : "+message.from);
+					message.reply("Nama Grup : "+(await message.getChat()).name);
+				} else {
+					message.reply("ID Pengirim : "+message.from);
+				}
+				return;
+			}
+
 			//clear typing status
 			clearInterval(typingInterval);
 			return;
