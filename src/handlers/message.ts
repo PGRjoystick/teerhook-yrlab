@@ -145,6 +145,8 @@ async function handleIncomingMessage(message: Message) {
 				const phoneNumbers = await getUserAndPhoneNumbers();
 				const formattedOutput = phoneNumbers.map(row => `Phone numbers: ${row.phoneNumber} | Usernames: ${row.userId}`).join('\n');
 				message.reply(formattedOutput);
+				//clear typing status
+				clearInterval(typingInterval);
 				return;
 			}
 
@@ -209,6 +211,8 @@ async function handleIncomingMessage(message: Message) {
 				if (addedUsers.length > 0) {
 					message.reply(`User ${addedUsers.join(', ')} berhasil ditambahkan.`);
 				}
+				//clear typing status
+				clearInterval(typingInterval);
 				return;
 			}
 
@@ -249,7 +253,8 @@ async function handleIncomingMessage(message: Message) {
 				} else {
 					message.reply('User tidak ditemukan.');
 				}
-
+				//clear typing status
+				clearInterval(typingInterval);
 				return;
 			}
 			
@@ -292,6 +297,8 @@ async function handleIncomingMessage(message: Message) {
 					console.error(err);
 					message.reply('Terjadi kesalahan saat mengubah harga.');
 				};
+				//clear typing status
+				clearInterval(typingInterval);
 				return;
 			}
 
@@ -303,9 +310,6 @@ async function handleIncomingMessage(message: Message) {
 					message.reply('Format salah! Gunakan: !pkgkeychange Nama_Paket Key_baru');
 					return;
 				}
-				//send whatsapp state to typing
-				const readchat = await message.getChat();
-				await readchat.sendStateTyping();
 				const packageKey = args[0];
 				const newKey = args[1];
 				try {
@@ -318,7 +322,6 @@ async function handleIncomingMessage(message: Message) {
 				};
 				//clear typing status
 				clearInterval(typingInterval);
-				readchat.clearState();
 				return;
 			}
 
@@ -333,8 +336,6 @@ async function handleIncomingMessage(message: Message) {
 						const formattedPackages = packages.map(pkg => `- Nama Paket: ${pkg.package_type}, Harga: ${pkg.price}, License Key: ${pkg.license_key}`);
 						const response = pkgList + formattedPackages.join('\n');
 						message.reply(response);
-						clearInterval(typingInterval);
-						return;
 					}
 				} catch (err) {
 					message.reply('Terjadi kesalahan saat mengambil paket.');
@@ -342,6 +343,8 @@ async function handleIncomingMessage(message: Message) {
 					clearInterval(typingInterval);
 					return;
 				}
+				//clear typing status
+				clearInterval(typingInterval);
 				return;
 			}
 			
@@ -369,6 +372,7 @@ async function handleIncomingMessage(message: Message) {
 					console.error(err);
 					message.reply('Terjadi kesalahan saat menghapus paket.');
 				}
+				clearInterval(typingInterval);
 				return;
 			}
 
@@ -415,6 +419,8 @@ async function handleIncomingMessage(message: Message) {
 						message.reply('Terjadi kesalahan saat membuat paket.');
 					}
 				}
+				//clear typing status
+				clearInterval(typingInterval);
 				return;
 			}
 
@@ -439,6 +445,8 @@ async function handleIncomingMessage(message: Message) {
 					console.error(err);
 					message.reply('Terjadi kesalahan saat menambahkan user ke newsletter.');
 				}
+				//clear typing status
+				clearInterval(typingInterval);
 				return;
 			}
 
@@ -455,6 +463,8 @@ async function handleIncomingMessage(message: Message) {
 				} else {
 					message.reply("ID Pengirim : "+message.from);
 				}
+				//clear typing status
+				clearInterval(typingInterval);
 				return;
 			}
 
