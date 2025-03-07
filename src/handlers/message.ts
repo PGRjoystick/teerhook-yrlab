@@ -3,16 +3,11 @@ import { startsWithIgnoreCase, broadcastMessage, checkAndUpdateProStatus, normal
 import { client } from "../index";
 import { getPhoneNumbersByLocation, getPhoneNumbersByLocationPrefix, getAllPhoneNumbers, addUser, deleteUser, changePackageKey, changePackagePrice, createPackage, deletePackage, getUserIdByPhoneNumber, getPackages, getUserAndPhoneNumbers, deletePhoneNumber, addPhoneNumber, initializeUserParam } from "../api/sqlite3";
 
-
-// Config & Constants
-import config from "../config";
-
 // CLI
 import * as cli from "../cli/ui";
 
 // For deciding to ignore old messages
 import { botReadyTimestamp } from "../index";
-import { changePasswordProtectedPostsByCategory } from "../api/wordpress";
 
 function delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -372,6 +367,7 @@ async function handleIncomingMessage(message: Message) {
 					console.error(err);
 					message.reply('Terjadi kesalahan saat menghapus paket.');
 				}
+				// clear typing status
 				clearInterval(typingInterval);
 				return;
 			}
@@ -467,7 +463,6 @@ async function handleIncomingMessage(message: Message) {
 				clearInterval(typingInterval);
 				return;
 			}
-
 			//clear typing status
 			clearInterval(typingInterval);
 			return;
@@ -488,6 +483,8 @@ async function handleIncomingMessage(message: Message) {
 				console.error(err);
 				message.reply('Terjadi kesalahan saat berhenti berlangganan newsletter.');
 			}
+			//clear typing status
+			clearInterval(typingInterval);
 			return;
 		}
 		// subscribe
@@ -502,6 +499,8 @@ async function handleIncomingMessage(message: Message) {
 				console.error(err);
 				message.reply('Terjadi kesalahan saat berlangganan newsletter.');
 			}
+			//clear typing status
+			clearInterval(typingInterval);
 			return;
 		}
 		// check status for user (!status)
@@ -528,10 +527,10 @@ async function handleIncomingMessage(message: Message) {
 				console.error(err);
 				message.reply('Terjadi kesalahan saat memeriksa status berlangganan.');
 			}
+			//clear typing status
+			clearInterval(typingInterval);
 			return;
 		}
-		//clear typing status
-		clearInterval(typingInterval);
 	}
 	cli.print(`[Message] Pesan masuk dari ${message.from}: ${messageString}`);
 } 
